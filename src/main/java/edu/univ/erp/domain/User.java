@@ -1,33 +1,47 @@
 package edu.univ.erp.domain;
 
-public abstract class User {
-    private String username;
-    private String userId;
-    private String role;
-    private int fontPreference;
-    private int modePreference;
+import java.sql.Timestamp;
 
-    public String getUsername() {
-        return username;
-    }
+public class User {
+        private final String userId;
+        private final String username;
+        private final String role;
+        private final String passwordHash;
+        private final String status;
+        private final int failedAttempts;
+        private final Timestamp lockedUntil;
+        private final Timestamp lastLogin;
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+        public User(String userId, String username, String role, String passwordHash, String status, int failedAttempts, Timestamp lockedUntil, Timestamp lastLogin) {
+            this.userId = userId;
+            this.username = username;
+            this.role = role;
+            this.passwordHash = passwordHash;
+            this.status = status;
+            this.failedAttempts = failedAttempts;
+            this.lockedUntil = lockedUntil;
+            this.lastLogin = lastLogin;
+        }
 
-    public String getUserId() {
-        return userId;
-    }
+        public String getUserId() {
+            return userId;
+        }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+        public String getUsername() {
+            return username;
+        }
 
-    public String getRole() {
-        return role;
-    }
+        public String getRole() {
+            return role;
+        }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
+        public String getStatus() { return status; }
+
+        public String getPasswordHash() { return passwordHash; }
+
+        public int getFailedAttempts() { return failedAttempts; }
+
+        public Timestamp getLockedUntil() { return lockedUntil; }
+
+        public Timestamp getLastLogin() { return lastLogin; }
 }

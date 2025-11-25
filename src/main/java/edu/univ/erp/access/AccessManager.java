@@ -1,0 +1,75 @@
+package edu.univ.erp.access;
+
+import edu.univ.erp.data.SectionDao;
+import edu.univ.erp.domain.User;
+import edu.univ.erp.service.ServiceException;
+
+import javax.sql.DataSource;
+import java.sql.SQLException;
+
+public class AccessManager {
+
+    private final SectionDao sectionDao;
+
+    public AccessManager(DataSource erpDS) {
+        this.sectionDao = new SectionDao(erpDS);
+    }
+
+    // -----------------------
+    // Current user
+    // -----------------------
+    public User current() throws ServiceException {
+        User u = CurrentSession.get();
+        if (u == null)
+            throw new ServiceException("Not logged in.");
+        return u;
+    }
+
+    // -----------------------
+    // Role checks
+    // -----------------------
+    public void requireAdmin() throws ServiceException {
+        if (!"admin".equalsIgnoreCase(current().getRole())) {
+            throw new ServiceException("Access denied: Admin only.");
+        }
+    }
+
+    public void requireStudent(String studentId) throws ServiceException {
+        User u = current();
+        if (!"student".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(studentId)) {
+            throw new ServiceException("Not allowed: Student access only.");
+        }
+    }
+
+    public void requireInstructor(String instructorId) throws ServiceException {
+        User u = current();
+        if (!"instructor".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(instructorId)) {
+            throw new ServiceException("Not allowed: Instructor access only.");
+        }
+    }
+
+    // -----------------------
+    // Instructor teaches specific section
+    // -----------------------
+    public void requireInstructorForSection(String instructorId, int sectionId)
+            throws ServiceException {
+
+        User u = current();
+        if (!"instructor".equalsIgnoreCase(u.getRole()) ||
+                !u.getUserId().equals(instructorId)) {
+            throw new ServiceException("Not allowed: Instructor access only.");
+        }
+
+        try {
+            var sec = sectionDao.getSection(sectionId);
+            if (sec == null)
+                throw new ServiceException("Section not found.");
+
+            if (!sec.getInstructorId().equals(instructorId))
+                throw new ServiceException("Not your section.");
+
+        } catch (SQLException e) {
+            throw new ServiceException(e.getMessage());
+        }
+    }
+}

@@ -1,97 +1,214 @@
 package edu.univ.erp.ui;
 
-import edu.univ.erp.auth.AuthService;
-import edu.univ.erp.auth.AuthResult;
+import com.formdev.flatlaf.FlatLightLaf;
+
+import javax.swing.*;
+import java.awt.*;
+
+import edu.univ.erp.api.auth.AuthApi;
+import edu.univ.erp.api.types.UserApi;
+import edu.univ.erp.domain.*;
+import edu.univ.erp.service.AuthService;
+import edu.univ.erp.service.UserService;
 import edu.univ.erp.util.DataSourceProvider;
 
-
-import javax.sql.DataSource;
-import javax.swing.*;
-        import java.awt.*;
-        import java.awt.event.ActionEvent;
-
 public class LoginWindow extends JFrame {
-    private final AuthService authService;
+
+    private final AuthApi authApi;
+    private final UserApi userApi;
 
     private JTextField usernameField;
     private JPasswordField passwordField;
-    private JLabel messageLabel;
-    private JButton loginBtn;
 
-    public LoginWindow() {
-        DataSource ds = DataSourceProvider.getDataSource();
-        this.authService = new AuthService(ds);
-
-        setTitle("University ERP - Login");
-        setSize(420, 240);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
+    public LoginWindow(AuthService authService, UserService userService) {
+        this.authApi = new AuthApi(authService);
+        this.userApi = new UserApi(userService);
         initUI();
     }
 
     private void initUI() {
-        JPanel p = new JPanel();
-        p.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(8,8,8,8);
-        c.fill = GridBagConstraints.HORIZONTAL;
+        setTitle("University ERP | Login Page");
+        setSize(800, 500);
+        setResizable(false);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-        c.gridx = 0; c.gridy = 0; p.add(new JLabel("Username:"), c);
-        c.gridx = 1; usernameField = new JTextField(20); p.add(usernameField, c);
+        Color teal = new Color(63, 173, 168);
+        Color darkGrey = new Color(60, 60, 60);
+        Color lightGrey = new Color(240, 240, 240);
 
-        c.gridx = 0; c.gridy = 1; p.add(new JLabel("Password:"), c);
-        c.gridx = 1; passwordField = new JPasswordField(20); p.add(passwordField, c);
+        //background container
+        JPanel bg = new JPanel(new GridBagLayout());
+        bg.setBackground(Color.white);
+        add(bg, BorderLayout.CENTER);
 
-        c.gridx = 0; c.gridy = 2; c.gridwidth = 2;
-        messageLabel = new JLabel(" ");
-        messageLabel.setForeground(Color.RED);
-        p.add(messageLabel, c);
+        //login menu centre card
+        JPanel card = new JPanel();
+        card.setBackground(Color.white);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(lightGrey, 2),
+                BorderFactory.createEmptyBorder(30, 35, 30, 35)
+        ));
+        card.setLayout(new GridBagLayout());
+        card.setPreferredSize(new Dimension(380, 400));
+        bg.add(card);
 
-        c.gridy = 3; c.gridwidth = 1;
-        loginBtn = new JButton("Login");
-        loginBtn.addActionListener(this::onLogin);
-        p.add(loginBtn, c);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(12, 0, 12, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.weightx = 1;
 
-        JButton quit = new JButton("Quit");
-        quit.addActionListener(e -> System.exit(0));
-        c.gridx = 1;
-        p.add(quit, c);
+        //page title
+        JLabel title = new JLabel("ERP Login", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 22));
+        title.setForeground(darkGrey);
 
-        add(p);
+        gbc.gridy = 0;
+        card.add(title, gbc);
+
+        //username label
+        JLabel userLabel = new JLabel("Username");
+        userLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        userLabel.setForeground(darkGrey);
+        gbc.gridy = 1;
+        card.add(userLabel, gbc);
+
+        //username
+        usernameField = new JTextField();
+        usernameField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(teal, 2),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        gbc.gridy = 2;
+        card.add(usernameField, gbc);
+
+        //password label
+        JLabel passLabel = new JLabel("Password");
+        passLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        passLabel.setForeground(darkGrey);
+        gbc.gridy = 3;
+        card.add(passLabel, gbc);
+
+        //password
+        JPanel passwordPanel = new JPanel(new BorderLayout());
+        passwordPanel.setBackground(Color.white);
+        passwordPanel.setBorder(BorderFactory.createLineBorder(teal, 2));
+
+        passwordField = new JPasswordField();
+        passwordField.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+
+        //eye button for password
+        JButton eyeBtn = getEyeBtn();
+        passwordPanel.add(passwordField, BorderLayout.CENTER);
+        passwordPanel.add(eyeBtn, BorderLayout.EAST);
+
+        gbc.gridy = 4;
+        card.add(passwordPanel, gbc);
+
+        //login button
+        JButton loginButton = new JButton("Login");
+        loginButton.setBackground(teal);
+        loginButton.setForeground(Color.white);
+        loginButton.setFont(new Font("SansSerif", Font.BOLD, 16));
+        loginButton.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        loginButton.setFocusPainted(false);
+
+        loginButton.addActionListener(e -> loginUser());
+
+        gbc.gridy = 5;
+        gbc.insets = new Insets(18, 0, 0, 0);
+        card.add(loginButton, gbc);
+
+        // Center window
+        setLocationRelativeTo(null);
     }
 
-    private void onLogin(ActionEvent ev) {
-        loginBtn.setEnabled(false);
-        messageLabel.setText("Signing in...");
-        SwingUtilities.invokeLater(() -> {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword());
-            AuthResult r = authService.authenticate(username, password);
-            if (r.ok) {
-                messageLabel.setForeground(new Color(0,128,0));
-                messageLabel.setText("Welcome! Role: " + r.role);
-                SwingUtilities.invokeLater(() -> {
-                    UserDashboard dash = new UserDashboard(username, r.role);
-                    dash.setVisible(true);
-                });
-                dispose();
+    private JButton getEyeBtn() {
+        JButton eyeBtn = new JButton("👁");
+        eyeBtn.setPreferredSize(new Dimension(45, 30));
+        eyeBtn.setFocusPainted(false);
+        eyeBtn.setBorder(null);
+        eyeBtn.setBackground(Color.white);
+
+        eyeBtn.addActionListener(e -> {
+            if (passwordField.getEchoChar() == 0) {
+                passwordField.setEchoChar('•');  // hide
+                eyeBtn.setText("👁");
             } else {
-                messageLabel.setForeground(Color.RED);
-                if (r.locked) {
-                    messageLabel.setText("Account locked until " + r.lockedUntil.toString());
-                } else {
-                    messageLabel.setText(r.message);
-                }
+                passwordField.setEchoChar((char) 0);  // show
+                eyeBtn.setText("🙈");
             }
-            loginBtn.setEnabled(true);
         });
+        return eyeBtn;
     }
 
+
+    //login
+    private void loginUser() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if (username.isBlank() || password.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Please Enter Both Username and Password.");
+            return;
+        }
+
+
+        // Authenticate the user & Open dashboard if user authenticated & loaded
+        var res= authApi.authenticateUser(username,password);
+        if (res.getData() == null) {
+            JOptionPane.showMessageDialog(this, res, "Login Failed", JOptionPane.ERROR_MESSAGE);
+        }
+        else{
+            User baseUser = res.getData();
+            var res2 = userApi.loadUserProfile(baseUser);
+            if (res2.getData() == null){
+                JOptionPane.showMessageDialog(this, res2, "Login Failed", JOptionPane.ERROR_MESSAGE);
+            }
+            else{
+                User full = res2.getData();
+                JOptionPane.showMessageDialog(this, "Login Successful!");
+                // Open corresponding dashboard
+                openDashboard(full);
+            }
+        }
+
+    }
+
+    //open the dashboard as per role
+    private void openDashboard(User user) {
+        this.dispose(); // close login window
+
+        switch (user.getRole().toLowerCase()) {
+            case "admin":
+                new AdminDashboard((Admin) user).setVisible(true);
+                break;
+            case "student":
+                new StudentDashboard((Student) user).setVisible(true);
+                break;
+            case "instructor":
+                new InstructorDashboard((Instructor) user).setVisible(true);
+                break;
+            default:
+                JOptionPane.showMessageDialog(null, "Unknown role: " + user.getRole());
+                System.exit(1);
+        }
+    }
+
+    //main
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            LoginWindow w = new LoginWindow();
-            w.setVisible(true);
-        });
+        FlatLightLaf.setup(); // enable flatlaf
+        UiContext ctx = UiContext.get();
+
+        javax.sql.DataSource authDS = DataSourceProvider.getAuthDataSource();
+        javax.sql.DataSource erpDS = DataSourceProvider.getERPDataSource();
+
+        AuthApi authApi = new AuthApi(new AuthService(authDS));
+        UserApi userApi = new UserApi(new UserService(authDS, erpDS));
+
+        SwingUtilities.invokeLater(() ->
+                new LoginWindow(ctx.auth(), ctx.users()).setVisible(true)
+        );
     }
 }
