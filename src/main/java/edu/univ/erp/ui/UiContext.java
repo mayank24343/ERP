@@ -1,7 +1,5 @@
 package edu.univ.erp.ui;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import edu.univ.erp.access.AccessManager;
 import edu.univ.erp.service.*;
 
@@ -14,21 +12,22 @@ public class UiContext {
     private final DataSource authDS;
     private final DataSource erpDS;
 
-    // Services
+    //services
     private final AuthService authService;
     private final UserService userService;
     private final StudentService studentService;
     private final InstructorService instructorService;
     private final AdminService adminService;
+    private final GradeSlabService gradeSlabService;
 
-    // Access Manager
+    //access Manager
     private final AccessManager accessManager;
 
     public UiContext() {
         this.authDS = DataSourceProvider.getAuthDataSource();
         this.erpDS = DataSourceProvider.getERPDataSource();
 
-        // Access manager
+        //access manager
         this.accessManager = new AccessManager(erpDS);
 
         // Services
@@ -37,11 +36,10 @@ public class UiContext {
         this.studentService = new StudentService(erpDS, accessManager);
         this.instructorService = new InstructorService(erpDS, accessManager);
         this.adminService = new AdminService(authDS, erpDS, accessManager);
+        this.gradeSlabService = new GradeSlabService(erpDS);
     }
 
-    // -----------------------------
-    // SINGLETON INSTANCE
-    // -----------------------------
+    //only one uicontext exists
     public static synchronized UiContext get() {
         if (instance == null) {
             instance = new UiContext();
@@ -49,18 +47,13 @@ public class UiContext {
         return instance;
     }
 
-    // -----------------------------
-    // GETTERS
-    // -----------------------------
+    //getters
     public AuthService auth() { return authService; }
     public UserService users() { return userService; }
     public StudentService students() { return studentService; }
     public InstructorService instructors() { return instructorService; }
     public AdminService admin() { return adminService; }
-
     public AccessManager access() { return accessManager; }
-
-    // -----------------------------
-    // HIKARI DATASOURCE CREATORS
+    public GradeSlabService slabs() { return gradeSlabService; }
 
 }

@@ -6,9 +6,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 
 public class MaintenanceDao {
-
     private final DataSource ds;
-
 
     public MaintenanceDao(DataSource ds) {
         this.ds = ds;

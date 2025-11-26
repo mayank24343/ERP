@@ -1,20 +1,20 @@
 package edu.univ.erp.data;
 
 import edu.univ.erp.domain.Course;
-import edu.univ.erp.domain.Student;
 
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
 public class CourseDao {
-
     private final DataSource ds;
 
+    //constructor
     public CourseDao(DataSource ds) {
         this.ds = ds;
     }
 
+    //add new course
     public void insertCourse(String code, String title, int credits) throws SQLException {
         String sql = "INSERT INTO courses (code, title, credits) VALUES (?, ?, ?)";
         try (Connection conn = ds.getConnection();
@@ -28,6 +28,7 @@ public class CourseDao {
         }
     }
 
+    //update course
     public void updateCourse(String code, String title, int credits) throws SQLException {
         String sql = "UPDATE courses SET title = ?, credits = ? WHERE code = ?";
         try (Connection conn = ds.getConnection();
@@ -40,25 +41,24 @@ public class CourseDao {
         }
     }
 
-    public List<Course> getAllCourses() throws SQLException {
-        String sql = "SELECT * FROM courses ORDER BY code";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            List<Course> list = new ArrayList<>();
-            while (rs.next()) {
-                list.add(new Course(
-                        rs.getInt("course_id"),
+    //get Course by id
+    public Course getCourse(int courseId) throws SQLException {
+        String sql = "SELECT * FROM courses WHERE course_id = ?";
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, courseId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Course(courseId,
                         rs.getString("code"),
                         rs.getString("title"),
-                        rs.getInt("credits")
-                ));
+                        rs.getInt("credits"));
+
             }
-            return list;
         }
+        return null;
     }
 
+    //get all courses
     public List<Course> findAllCourses() throws SQLException {
         String sql = "SELECT * FROM courses ORDER BY code";
         try (Connection conn = ds.getConnection();
@@ -76,9 +76,5 @@ public class CourseDao {
             }
             return list;
         }
-    }
-
-    public List<Student> getAllStudentsOfCourse() throws SQLException {
-        return null;
     }
 }

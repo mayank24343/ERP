@@ -2,7 +2,9 @@ package edu.univ.erp.service;
 
 import edu.univ.erp.access.CurrentSession;
 import edu.univ.erp.data.AuthDao;
+import edu.univ.erp.data.MaintenanceDao;
 import edu.univ.erp.domain.User;
+import edu.univ.erp.util.DataSourceProvider;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.sql.DataSource;
@@ -15,12 +17,14 @@ import java.util.Optional;
 public class AuthService {
 
     private final AuthDao authDao;
-    private final int MAX_ATTEMPTS = 3;
-    private final int LOCK_MINUTES = 3;
+    private final MaintenanceDao maintenanceDao;
+    private final int MAX_ATTEMPTS = 5; //upto 5 password attempts
+    private final int LOCK_MINUTES = 5; //lock for 5 minutes
 
     //constructor
     public AuthService(DataSource authDS) {
         this.authDao = new AuthDao(authDS);
+        this.maintenanceDao = new MaintenanceDao(DataSourceProvider.getERPDataSource());
     }
 
     //login service
@@ -37,12 +41,8 @@ public class AuthService {
         if ("locked".equalsIgnoreCase(user.getStatus())) {
 
             //if current time is not after locked until time, throw error
-            if (user.getLockedUntil() != null &&
-                    user.getLockedUntil().after(Timestamp.from(Instant.now()))) {
-
-                long minutesLeft = ChronoUnit.MINUTES.between(
-                        Instant.now(), user.getLockedUntil().toInstant());
-
+            if (user.getLockedUntil() != null && user.getLockedUntil().after(Timestamp.from(Instant.now()))) {
+                long minutesLeft = ChronoUnit.MINUTES.between(Instant.now(), user.getLockedUntil().toInstant());
                 throw new ServiceException("Account locked. Try again in " + minutesLeft + " minutes.");
             }
 
@@ -85,7 +85,29 @@ public class AuthService {
         }
     }
 
+    //change password
     public void changePassword(String username, String oldPass, String newPass) throws ServiceException, SQLException {
-        return;
+        //throw error if empty fields, old password wrong, or old and new passwords same
+        if (username == null || oldPass == null || newPass == null){
+            throw new ServiceException("Empty Fields.");
+        }
+        if (username.isBlank() || oldPass.isBlank() || newPass.isBlank()){
+            throw new ServiceException("Empty Fields.");
+        }
+        if (oldPass.equals(newPass)) {
+            throw new ServiceException("Old And New Password Cannot Be Same.");
+        }
+        if (CurrentSession.get() == null) {
+            throw new ServiceException("Current Session is null.");
+        }
+        if (!BCrypt.checkpw(oldPass, CurrentSession.get().getPasswordHash())) {
+            throw new ServiceException("Incorrect Old Password.");
+        }
+        if (maintenanceDao.isMaintenanceOn()){
+            throw new ServiceException("Maintenance Mode On. View Only.");
+        }
+
+        //change password hash to new passowrd hash
+        authDao.changePassword(username, BCrypt.hashpw(newPass, BCrypt.gensalt(12)));
     }
 }

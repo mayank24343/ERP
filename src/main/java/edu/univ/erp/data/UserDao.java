@@ -10,7 +10,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class UserDao {
-
     private final DataSource authDS;
     private final DataSource erpDS;
 
@@ -25,6 +24,35 @@ public class UserDao {
 
         AuthDao authDao = new AuthDao(authDS);
         var opt = authDao.findByUsername(username);
+
+        if (opt.isEmpty()) return null;
+
+        User base = opt.get();
+
+        switch (base.getRole().toLowerCase()) {
+            case "student":
+                return loadStudent(base);
+            case "instructor":
+                return loadInstructor(base);
+            case "admin":
+                return new Admin(
+                        base.getFullname(),
+                        base.getUserId(),
+                        base.getUsername(),
+                        base.getRole(),
+                        base.getPasswordHash(),
+                        base.getStatus(),
+                        base.getFailedAttempts(),
+                        base.getLockedUntil(),
+                        base.getLastLogin());
+            default:
+                throw new SQLException("Unknown role: " + base.getRole());
+        }
+    }
+
+    public User findFullUserByUserId(String userId) throws SQLException {
+        AuthDao authDao = new AuthDao(authDS);
+        var opt = authDao.findByUserId(userId);
 
         if (opt.isEmpty()) return null;
 
@@ -110,6 +138,7 @@ public class UserDao {
         }
     }
 
+    //list of all users
     public List<User> findAllUsers() throws SQLException {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM auth_users";
@@ -126,6 +155,7 @@ public class UserDao {
         return list;
     }
 
+    //list of all instructors
     public List<Instructor> findAllInstructors() throws SQLException {
         List<User> users = findAllUsers();
         List<Instructor> list = new ArrayList<>();
@@ -138,6 +168,7 @@ public class UserDao {
         return list;
     }
 
+    //list of all students
     public List<Student> findAllStudents() throws SQLException {
         List<User> users = findAllUsers();
         List<Student> list = new ArrayList<>();
@@ -150,6 +181,7 @@ public class UserDao {
         return list;
     }
 
+    //user mapping
     private User mapUser(ResultSet rs) throws SQLException {
         return new User(
                 rs.getString("full_name"),
@@ -163,6 +195,4 @@ public class UserDao {
                 rs.getTimestamp("last_login")
         );
     }
-
-
 }

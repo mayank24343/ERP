@@ -3,9 +3,7 @@ package edu.univ.erp.api.auth;
 import edu.univ.erp.api.common.ApiResult;
 import edu.univ.erp.domain.User;
 import edu.univ.erp.service.AuthService;
-import edu.univ.erp.service.ServiceException;
 
-import java.sql.SQLException;
 
 public class AuthApi {
     private final AuthService service;
@@ -25,7 +23,7 @@ public class AuthApi {
         }
     }
 
-    //logout
+    //Api to logout user
     public ApiResult<Void> logoutUser() {
         try {
             service.logout();
@@ -35,10 +33,11 @@ public class AuthApi {
         }
     }
 
+    //Api to change password
     public ApiResult<Void> changePassword(String username, String oldPass, String newPass) {
         try {
             service.changePassword(username, oldPass, newPass);
-            return ApiResult.okMessage("Change Password.");
+            return ApiResult.okMessage("Password Changed.");
         } catch (Exception e) {
             return ApiResult.error(e.getMessage());
         }

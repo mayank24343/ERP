@@ -125,7 +125,7 @@ public class LoginWindow extends JFrame {
     }
 
     private JButton getEyeBtn() {
-        JButton eyeBtn = new JButton("👁");
+        JButton eyeBtn = new JButton("👁" );
         eyeBtn.setPreferredSize(new Dimension(45, 30));
         eyeBtn.setFocusPainted(false);
         eyeBtn.setBorder(null);
@@ -142,7 +142,6 @@ public class LoginWindow extends JFrame {
         });
         return eyeBtn;
     }
-
 
     //login
     private void loginUser() {
@@ -182,13 +181,14 @@ public class LoginWindow extends JFrame {
 
         switch (user.getRole().toLowerCase()) {
             case "admin":
-                new AdminDashboard((Admin) user).setVisible(true);
+                SwingUtilities.invokeLater(() -> new AdminDashboard((Admin) user).setVisible(true));
                 break;
             case "student":
-                new StudentDashboard((Student) user).setVisible(true);
+                SwingUtilities.invokeLater(() -> new StudentDashboard((Student) user).setVisible(true));
+
                 break;
             case "instructor":
-                new InstructorDashboard((Instructor) user).setVisible(true);
+                SwingUtilities.invokeLater(() -> new InstructorDashboard((Instructor) user).setVisible(true));
                 break;
             default:
                 JOptionPane.showMessageDialog(null, "Unknown role: " + user.getRole());

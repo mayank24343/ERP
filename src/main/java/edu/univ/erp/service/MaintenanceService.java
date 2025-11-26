@@ -6,9 +6,9 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 
 public class MaintenanceService {
-
     private final MaintenanceDao dao;
 
+    //constructor
     public MaintenanceService(DataSource erpDS) {
         this.dao = new MaintenanceDao(erpDS);
     }

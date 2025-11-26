@@ -8,8 +8,7 @@ public class Assessment {
     private final double maxMarks;
     private final double weight; // weight in percentage (0–100)
 
-    public Assessment(int id, int sectionId, String name,
-                      double maxMarks, double weight) {
+    public Assessment(int id, int sectionId, String name, double maxMarks, double weight) {
         this.id = id;
         this.sectionId = sectionId;
         this.name = name;

@@ -30,5 +30,4 @@ public class StudentDao {
             ps.executeUpdate();
         }
     }
-
 }

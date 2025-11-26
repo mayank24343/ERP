@@ -55,24 +55,10 @@ public class AdminService {
 
         //generate user_id (UUID)
         String userId = UUID.randomUUID().toString();
+        //add to auth_db
+        authDao.addUser(fullName,username,password,role,userId);
 
-        //password hash
-        String hash = BCrypt.hashpw(password, BCrypt.gensalt(12));
-
-        //insert into auth DB
-        String authSql = "INSERT INTO auth_users (user_id, username, role, password_hash, status, failed_attempts,full_name) " + "VALUES (?, ?, ?, ?, 'active', 0, ?)";
-
-        try (var conn = authDao.getConnection();
-             var ps = conn.prepareStatement(authSql)) {
-            ps.setString(1, userId);
-            ps.setString(2, username);
-            ps.setString(3, role);
-            ps.setString(4, hash);
-            ps.setString(5, fullName);
-            ps.executeUpdate();
-        }
-
-        //insert into erp DB
+        //insert into erp_db
         switch (role) {
             case "student":
                 studentDao.insertStudent(userId, rollNo, program, year);

@@ -1,60 +1,76 @@
 package edu.univ.erp.data;
 
-import edu.univ.erp.domain.FinalGrade;
-import edu.univ.erp.domain.Assessment;
-import edu.univ.erp.domain.Score;
+import edu.univ.erp.domain.*;
+import edu.univ.erp.util.DataSourceProvider;
 
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
 public class FinalGradeDao {
-
     private final DataSource ds;
     private final AssessmentDao assessmentDao;
     private final ScoreDao scoreDao;
-    private final EnrollmentDao enrollmentDao;
+    private final SectionDao sectionDao;
+    private final UserDao userDao;
+    private final GradeSlabDao slabDao;
 
-    public FinalGradeDao(DataSource ds,
-                         AssessmentDao assessmentDao,
-                         ScoreDao scoreDao,
-                         EnrollmentDao enrollmentDao) {
+    //constructor
+    public FinalGradeDao(DataSource ds, AssessmentDao assessmentDao, ScoreDao scoreDao, EnrollmentDao enrollmentDao) {
 
         this.ds = ds;
         this.assessmentDao = assessmentDao;
         this.scoreDao = scoreDao;
-        this.enrollmentDao = enrollmentDao;
+        this.userDao = new UserDao(DataSourceProvider.getAuthDataSource(), DataSourceProvider.getERPDataSource());
+        this.sectionDao = new SectionDao(DataSourceProvider.getERPDataSource());
+        this.slabDao = new GradeSlabDao(DataSourceProvider.getERPDataSource());
     }
 
-    // --------------------------------------------------------------
-    // Compute finals for ALL students in a section (does NOT save)
-    // --------------------------------------------------------------
+    //compute final grades for section
     public List<FinalGrade> computeFinals(int sectionId) throws SQLException {
-
         List<Assessment> assessments = assessmentDao.getBySection(sectionId);
         if (assessments.isEmpty()) return List.of();
 
-        // all active students in the section
-        List<Integer> enrolledIds = enrollmentDao.getActiveSectionIdsForStudent("//INVALID");
-
-        // Actually fetch directly studentIds:
+        //students in section
         List<String> studentIds = getStudentIdsForSection(sectionId);
 
         List<FinalGrade> results = new ArrayList<>();
 
+        //get slabs
+        List<GradeSlab> slabs = slabDao.getSlabs(sectionId);
+
+
+        //for each student, calculate final grade
         for (String studentId : studentIds) {
             double percentage = computeFinalPercentageForStudent(sectionId, studentId, assessments);
-            String letter = mapToLetter(percentage);
+            String letter = computeLetter(percentage, slabs);
+            Section section = sectionDao.getSection(sectionId);
+            Student student = (Student) userDao.findFullUserByUserId(studentId);
 
-            results.add(new FinalGrade(studentId, sectionId, percentage, letter));
+            results.add(new FinalGrade(student, section, percentage, letter));
         }
 
         return results;
     }
 
-    // --------------------------------------------------------------
-    // Compute AND SAVE final grades into final_grades table
-    // --------------------------------------------------------------
+    //compute letter grades
+    public String computeLetter(double percent, List<GradeSlab> slabs) {
+        for (GradeSlab s : slabs) {
+            if (percent >= s.getMin() && percent <= s.getMax()) {
+                return s.getLetter();
+            }
+        }
+
+        //default
+        if (percent >= 95) return "A+";
+        if (percent >= 90) return "A";
+        if (percent >= 80) return "A-";
+        if (percent >= 70) return "B";
+        if (percent >= 60) return "C";
+        return "F";
+    }
+
+    //store final grades to db
     public void computeAndStoreFinals(int sectionId) throws SQLException {
         List<FinalGrade> finals = computeFinals(sectionId);
 
@@ -63,29 +79,22 @@ public class FinalGradeDao {
         }
     }
 
-    // --------------------------------------------------------------
-    // Compute final grade for one student (NOT stored)
-    // --------------------------------------------------------------
+    //compute final for a student
     public FinalGrade computeForStudent(int sectionId, String studentId) throws SQLException {
         List<Assessment> assessments = assessmentDao.getBySection(sectionId);
         double percentage = computeFinalPercentageForStudent(sectionId, studentId, assessments);
-        String letter = mapToLetter(percentage);
+        String letter = computeLetter(percentage, slabDao.getSlabs(sectionId));
+        Section section = sectionDao.getSection(sectionId);
+        Student student = (Student) userDao.findFullUserByUserId(studentId);
 
-        return new FinalGrade(studentId, sectionId, percentage, letter);
+        return new FinalGrade(student, section, percentage, letter);
     }
 
-    // --------------------------------------------------------------
-    // Get final grade entry (from table)
-    // --------------------------------------------------------------
+    //get final grade for student in section
     public FinalGrade getFinalGrade(int sectionId, String studentId) throws SQLException {
-        String sql = """
-            SELECT section_id, student_id, percentage, letter_grade
-            FROM final_grades
-            WHERE section_id = ? AND student_id = ?
-        """;
+        String sql = "SELECT section_id, student_id, percentage, letter_grade FROM final_grades WHERE section_id = ? AND student_id = ?";
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, sectionId);
             ps.setString(2, studentId);
@@ -93,8 +102,8 @@ public class FinalGradeDao {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new FinalGrade(
-                            rs.getString("student_id"),
-                            rs.getInt("section_id"),
+                            (Student) userDao.findFullUserByUserId(rs.getString("student_id")),
+                            sectionDao.getSection(rs.getInt("section_id")),
                             rs.getDouble("percentage"),
                             rs.getString("letter_grade")
                     );
@@ -105,29 +114,21 @@ public class FinalGradeDao {
         return null;
     }
 
-    // --------------------------------------------------------------
-    // Get all final grades for student (for StudentDashboard)
-    // --------------------------------------------------------------
+    //get final grades for student
     public List<FinalGrade> getFinalGradesForStudent(String studentId) throws SQLException {
-        String sql = """
-            SELECT section_id, student_id, percentage, letter_grade
-            FROM final_grades
-            WHERE student_id = ?
-            ORDER BY section_id
-        """;
+        String sql = "SELECT section_id, student_id, percentage, letter_grade FROM final_grades WHERE student_id = ? ORDER BY section_id ";
 
         List<FinalGrade> list = new ArrayList<>();
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, studentId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(new FinalGrade(
-                            rs.getString("student_id"),
-                            rs.getInt("section_id"),
+                            (Student) userDao.findFullUserByUserId(rs.getString("student_id")),
+                            sectionDao.getSection(rs.getInt("section_id")),
                             rs.getDouble("percentage"),
                             rs.getString("letter_grade")
                     ));
@@ -138,23 +139,14 @@ public class FinalGradeDao {
         return list;
     }
 
-    // --------------------------------------------------------------
-    // Insert or update a final grade
-    // --------------------------------------------------------------
+    //uodate and insert final grades
     public void upsertFinalGrade(FinalGrade g) throws SQLException {
-        String sql = """
-            INSERT INTO final_grades (section_id, student_id, percentage, letter_grade)
-            VALUES (?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                percentage = VALUES(percentage),
-                letter_grade = VALUES(letter_grade)
-        """;
+        String sql = "INSERT INTO final_grades (section_id, student_id, percentage, letter_grade) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE percentage = VALUES(percentage), letter_grade = VALUES(letter_grade) ";
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, g.getSectionId());
-            ps.setString(2, g.getStudentId());
+            ps.setInt(1, g.getSection().getSectionId());
+            ps.setString(2, g.getStudent().getUserId());
             ps.setDouble(3, g.getPercentage());
             ps.setString(4, g.getLetter());
 
@@ -162,9 +154,7 @@ public class FinalGradeDao {
         }
     }
 
-    // --------------------------------------------------------------
-    // Delete all final grades for a section
-    // --------------------------------------------------------------
+    //delete final grades
     public void deleteFinalsForSection(int sectionId) throws SQLException {
         String sql = "DELETE FROM final_grades WHERE section_id = ?";
 
@@ -176,13 +166,8 @@ public class FinalGradeDao {
         }
     }
 
-    // --------------------------------------------------------------
-    // Compute final % for one student
-    // --------------------------------------------------------------
-    private double computeFinalPercentageForStudent(int sectionId,
-                                                    String studentId,
-                                                    List<Assessment> assessments)
-            throws SQLException {
+    //final %age for student
+    private double computeFinalPercentageForStudent(int sectionId, String studentId, List<Assessment> assessments) throws SQLException {
 
         double total = 0;
 
@@ -198,9 +183,7 @@ public class FinalGradeDao {
         return total;
     }
 
-    // --------------------------------------------------------------
-    // Helper to fetch all student IDs in a section
-    // --------------------------------------------------------------
+    //ids of student in a section
     private List<String> getStudentIdsForSection(int sectionId) throws SQLException {
         String sql = """
             SELECT student_id
@@ -221,16 +204,5 @@ public class FinalGradeDao {
         }
 
         return list;
-    }
-
-    // --------------------------------------------------------------
-    // Map percentage → letter grade
-    // --------------------------------------------------------------
-    private String mapToLetter(double p) {
-        if (p >= 90) return "A";
-        if (p >= 80) return "B";
-        if (p >= 70) return "C";
-        if (p >= 60) return "D";
-        return "F";
     }
 }

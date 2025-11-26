@@ -3,6 +3,7 @@ package edu.univ.erp.service;
 import edu.univ.erp.access.AccessManager;
 import edu.univ.erp.data.*;
 import edu.univ.erp.domain.*;
+import edu.univ.erp.ui.UiContext;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -18,10 +19,12 @@ public class StudentService {
     private final AssessmentDao assessmentDao;
     private final ScoreDao scoreDao;
     private final FinalGradeDao finalGradeDao;
+    private final MaintenanceDao maintenanceDao;
 
     // Set drop deadline here (change as needed)
     private final LocalDate DROP_DEADLINE = LocalDate.of(2025, 1, 31);
 
+    //constructor
     public StudentService(DataSource ds, AccessManager a) {
 
         this.courseDao = new CourseDao(ds);
@@ -30,87 +33,90 @@ public class StudentService {
         this.assessmentDao = new AssessmentDao(ds);
         this.scoreDao = new ScoreDao(ds);
         this.finalGradeDao = new FinalGradeDao(ds, assessmentDao, scoreDao, enrollmentDao);
+        this.maintenanceDao = new MaintenanceDao(ds);
     }
 
-    // ---------------------------------------------------------
-    // COURSE CATALOG
-    // ---------------------------------------------------------
+    //course catalog
     public List<Course> getCatalog() throws SQLException {
         return courseDao.findAllCourses();
     }
 
-    // ---------------------------------------------------------
-    // SECTIONS AVAILABLE FOR REGISTRATION
-    // ---------------------------------------------------------
+    //sections for registration
     public List<Section> getAvailableSections(int courseId) throws SQLException {
         return sectionDao.findSectionsForRegistration(courseId);
     }
 
-    // ---------------------------------------------------------
-    // REGISTER STUDENT
-    // ---------------------------------------------------------
+    //register student
     public void register(String studentId, int sectionId) throws Exception {
+        //maintenance should be off
+        if (maintenanceDao.isMaintenanceOn()){
+            throw new ServiceException("Maintenance Mode On. View Only.");
+        }
 
-        // Check duplicate
+        //access management
+        UiContext.get().access().requireStudent(studentId);
+
+        //throw error if already enrolled or section full
         if (enrollmentDao.isAlreadyEnrolled(studentId, sectionId)) {
             throw new Exception("You are already registered in this section.");
         }
 
-        // Check capacity
         if (!sectionDao.hasSeat(sectionId)) {
             throw new Exception("Section is full.");
         }
 
-        // Register
+        //register student
         enrollmentDao.register(studentId, sectionId);
     }
 
-    // ---------------------------------------------------------
-    // DROP SECTION
-    // ---------------------------------------------------------
+    //drop course
     public void drop(String studentId, int sectionId) throws Exception {
+        //maintenance should be off
+        if (maintenanceDao.isMaintenanceOn()){
+            throw new ServiceException("Maintenance Mode On. View Only.");
+        }
 
-        // Check drop deadline
+        //access management
+        UiContext.get().access().requireStudent(studentId);
+
+        //throw error if after drop deadline or not enrolled in course
         if (LocalDate.now().isAfter(DROP_DEADLINE)) {
             throw new Exception("Drop deadline has passed.");
         }
 
-        // Must be enrolled
         if (!enrollmentDao.isAlreadyEnrolled(studentId, sectionId)) {
             throw new Exception("You are not enrolled in this section.");
         }
 
+        //drop course
         enrollmentDao.drop(studentId, sectionId);
     }
 
-    // ---------------------------------------------------------
-    // LIST MY SECTIONS (REGISTERED)
-    // ---------------------------------------------------------
-    public List<Section> getMySections(String studentId) throws SQLException {
+    //enrolled sections
+    public List<Section> getMySections(String studentId) throws Exception {
+        //access management
+        UiContext.get().access().requireStudent(studentId);
         return sectionDao.getSectionsForStudent(studentId);
     }
 
-    // ---------------------------------------------------------
-    // TIMETABLE (same as sections)
-    // ---------------------------------------------------------
-    public List<Section> getTimetable(String studentId) throws SQLException {
+    //student timetable
+    public List<Section> getTimetable(String studentId) throws Exception {
+        //access management
+        UiContext.get().access().requireStudent(studentId);
         return sectionDao.getSectionsForStudent(studentId);
     }
 
-    // ---------------------------------------------------------
-    // GET ALL GRADES FOR THIS STUDENT
-    // Final GradeDao returns FINAL grades (one per section)
-    // Scores are shown assessment-by-assessment
-    // ---------------------------------------------------------
-    public List<GradeView> getGradeBreakdown(String studentId) throws SQLException {
-
+    //
+    public List<GradeView> getGradeBreakdown(String studentId) throws Exception {
+        //access management
+        UiContext.get().access().requireStudent(studentId);
         List<GradeView> result = new ArrayList<>();
 
-        // sections the student is enrolled in
+        //enrolled sections
         List<Section> sections = sectionDao.getSectionsForStudent(studentId);
 
+        //for each section, get component scores and final grade
         for (Section s : sections) {
-
             List<Assessment> assessments = assessmentDao.getBySection(s.getSectionId());
 
             List<Score> scores = new ArrayList<>();
@@ -120,39 +126,27 @@ public class StudentService {
             }
 
             FinalGrade finalGrade = finalGradeDao.computeForStudent(s.getSectionId(), studentId);
-
-            result.add(new GradeView(
-                    s,
-                    assessments,
-                    scores,
-                    finalGrade
-            ));
+            result.add(new GradeView(s, assessments, scores, finalGrade));
         }
 
         return result;
     }
 
-    // ---------------------------------------------------------
-    // Convenience: Student only sees final grades (no breakdown)
-    // ---------------------------------------------------------
-    public List<FinalGrade> getFinalGrades(String studentId) throws SQLException {
+    //final grades for student
+    public List<FinalGrade> getFinalGrades(String studentId) throws Exception {
+        //access management
+        UiContext.get().access().requireStudent(studentId);
         return finalGradeDao.getFinalGradesForStudent(studentId);
     }
 
-    // ---------------------------------------------------------
-    // Wrapper DTO for Student Dashboard grade screen
-    // (One object per section)
-    // ---------------------------------------------------------
+    //component wise grades for each enrolled section
     public static class GradeView {
         private final Section section;
         private final List<Assessment> assessments;
         private final List<Score> scores;
         private final FinalGrade finalGrade;
 
-        public GradeView(Section section,
-                         List<Assessment> assessments,
-                         List<Score> scores,
-                         FinalGrade finalGrade) {
+        public GradeView(Section section, List<Assessment> assessments, List<Score> scores, FinalGrade finalGrade) {
             this.section = section;
             this.assessments = assessments;
             this.scores = scores;

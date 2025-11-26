@@ -17,14 +17,14 @@ public class CSVExporter {
             try (FileWriter fw = new FileWriter(file)) {
                 TableModel model = table.getModel();
 
-                // Write header row
+                //header row
                 for (int col = 0; col < model.getColumnCount(); col++) {
                     fw.write(model.getColumnName(col));
                     if (col < model.getColumnCount() - 1) fw.write(",");
                 }
                 fw.write("\n");
 
-                // Write data rows
+                //data rows
                 for (int row = 0; row < model.getRowCount(); row++) {
                     for (int col = 0; col < model.getColumnCount(); col++) {
                         Object value = model.getValueAt(row, col);

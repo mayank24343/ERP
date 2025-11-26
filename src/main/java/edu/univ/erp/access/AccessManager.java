@@ -15,9 +15,6 @@ public class AccessManager {
         this.sectionDao = new SectionDao(erpDS);
     }
 
-    // -----------------------
-    // Current user
-    // -----------------------
     public User current() throws ServiceException {
         User u = CurrentSession.get();
         if (u == null)
@@ -25,15 +22,14 @@ public class AccessManager {
         return u;
     }
 
-    // -----------------------
-    // Role checks
-    // -----------------------
+    //admin access
     public void requireAdmin() throws ServiceException {
         if (!"admin".equalsIgnoreCase(current().getRole())) {
             throw new ServiceException("Access denied: Admin only.");
         }
     }
 
+    //student access
     public void requireStudent(String studentId) throws ServiceException {
         User u = current();
         if (!"student".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(studentId)) {
@@ -41,6 +37,7 @@ public class AccessManager {
         }
     }
 
+    //instructor access
     public void requireInstructor(String instructorId) throws ServiceException {
         User u = current();
         if (!"instructor".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(instructorId)) {
@@ -48,9 +45,7 @@ public class AccessManager {
         }
     }
 
-    // -----------------------
-    // Instructor teaches specific section
-    // -----------------------
+    //instructor & section access
     public void requireInstructorForSection(String instructorId, int sectionId)
             throws ServiceException {
 
@@ -65,7 +60,7 @@ public class AccessManager {
             if (sec == null)
                 throw new ServiceException("Section not found.");
 
-            if (!sec.getInstructorId().equals(instructorId))
+            if (!sec.getInstructor().equals(instructorId))
                 throw new ServiceException("Not your section.");
 
         } catch (SQLException e) {
