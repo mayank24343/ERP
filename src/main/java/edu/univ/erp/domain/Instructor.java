@@ -8,6 +8,7 @@ public class Instructor extends User {
     private final String designation;
 
     public Instructor(
+            String fullName,
             String userId,
             String username,
             String role,
@@ -21,7 +22,7 @@ public class Instructor extends User {
             String department,
             String designation
     ) {
-        super(userId, username, role, passwordHash, status, failedAttempts, lockedUntil, lastLogin);
+        super(fullName,userId, username, role, passwordHash, status, failedAttempts, lockedUntil, lastLogin);
         this.department = department;
         this.designation = designation;
     }

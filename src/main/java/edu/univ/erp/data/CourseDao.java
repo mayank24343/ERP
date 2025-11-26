@@ -59,6 +59,25 @@ public class CourseDao {
         }
     }
 
+    public List<Course> findAllCourses() throws SQLException {
+        String sql = "SELECT * FROM courses ORDER BY code";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            List<Course> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(new Course(
+                        rs.getInt("course_id"),
+                        rs.getString("code"),
+                        rs.getString("title"),
+                        rs.getInt("credits")
+                ));
+            }
+            return list;
+        }
+    }
+
     public List<Student> getAllStudentsOfCourse() throws SQLException {
         return null;
     }

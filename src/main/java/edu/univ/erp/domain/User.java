@@ -3,6 +3,7 @@ package edu.univ.erp.domain;
 import java.sql.Timestamp;
 
 public class User {
+        private final String fullname;
         private final String userId;
         private final String username;
         private final String role;
@@ -12,7 +13,8 @@ public class User {
         private final Timestamp lockedUntil;
         private final Timestamp lastLogin;
 
-        public User(String userId, String username, String role, String passwordHash, String status, int failedAttempts, Timestamp lockedUntil, Timestamp lastLogin) {
+        public User(String fullname, String userId, String username, String role, String passwordHash, String status, int failedAttempts, Timestamp lockedUntil, Timestamp lastLogin) {
+            this.fullname = fullname;
             this.userId = userId;
             this.username = username;
             this.role = role;
@@ -21,6 +23,10 @@ public class User {
             this.failedAttempts = failedAttempts;
             this.lockedUntil = lockedUntil;
             this.lastLogin = lastLogin;
+        }
+
+        public String getFullname() {
+            return fullname;
         }
 
         public String getUserId() {

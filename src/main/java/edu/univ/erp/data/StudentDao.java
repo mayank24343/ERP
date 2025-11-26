@@ -7,15 +7,13 @@ import java.sql.*;
 import java.util.List;
 
 public class StudentDao {
-
     private final DataSource ds;
 
     public StudentDao(DataSource ds) {
         this.ds = ds;
     }
 
-    public void insertStudent(String userId, String rollNo, String program, int year)
-            throws SQLException {
+    public void insertStudent(String userId, String rollNo, String program, int year) throws SQLException {
 
         String sql = """
             INSERT INTO students (user_id, roll_no, program, year)

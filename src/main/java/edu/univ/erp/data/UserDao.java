@@ -4,6 +4,10 @@ import edu.univ.erp.domain.*;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class UserDao {
 
@@ -32,7 +36,9 @@ public class UserDao {
             case "instructor":
                 return loadInstructor(base);
             case "admin":
-                return new Admin(base.getUserId(),
+                return new Admin(
+                        base.getFullname(),
+                        base.getUserId(),
                         base.getUsername(),
                         base.getRole(),
                         base.getPasswordHash(),
@@ -59,6 +65,7 @@ public class UserDao {
                 throw new SQLException("Student profile missing for user_id: " + base.getUserId());
 
             return new Student(
+                    base.getFullname(),
                     base.getUserId(),
                     base.getUsername(),
                     base.getRole(),
@@ -88,6 +95,7 @@ public class UserDao {
                 throw new SQLException("Instructor profile missing for user_id: " + base.getUserId());
 
             return new Instructor(
+                    base.getFullname(),
                     base.getUserId(),
                     base.getUsername(),
                     base.getRole(),
@@ -101,5 +109,60 @@ public class UserDao {
             );
         }
     }
+
+    public List<User> findAllUsers() throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM auth_users";
+
+        try (Connection conn = authDS.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapUser(rs));  // map each row into User
+            }
+        }
+
+        return list;
+    }
+
+    public List<Instructor> findAllInstructors() throws SQLException {
+        List<User> users = findAllUsers();
+        List<Instructor> list = new ArrayList<>();
+        for  (User user : users) {
+            if (Objects.equals(user.getRole(), "instructor")){
+                list.add(loadInstructor(user));
+            }
+        }
+
+        return list;
+    }
+
+    public List<Student> findAllStudents() throws SQLException {
+        List<User> users = findAllUsers();
+        List<Student> list = new ArrayList<>();
+        for  (User user : users) {
+            if (Objects.equals(user.getRole(), "student")){
+                list.add(loadStudent(user));
+            }
+        }
+
+        return list;
+    }
+
+    private User mapUser(ResultSet rs) throws SQLException {
+        return new User(
+                rs.getString("full_name"),
+                rs.getString("user_id"),
+                rs.getString("username"),
+                rs.getString("role"),
+                rs.getString("password_hash"),
+                rs.getString("status"),
+                rs.getInt("failed_attempts"),
+                rs.getTimestamp("locked_until"),
+                rs.getTimestamp("last_login")
+        );
+    }
+
 
 }

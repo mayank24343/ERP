@@ -1,107 +1,167 @@
 package edu.univ.erp.service;
 
 import edu.univ.erp.access.AccessManager;
-import edu.univ.erp.access.CurrentSession;
 import edu.univ.erp.data.*;
 import edu.univ.erp.domain.*;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StudentService {
-
-    private final AccessManager access;
-    private final MaintenanceService maintenance;
 
     private final CourseDao courseDao;
     private final SectionDao sectionDao;
     private final EnrollmentDao enrollmentDao;
-    private final GradeDao gradeDao;
+    private final AssessmentDao assessmentDao;
+    private final ScoreDao scoreDao;
+    private final FinalGradeDao finalGradeDao;
 
-    public StudentService(DataSource erpDS, AccessManager access) {
-        this.access = access;
-        this.maintenance = new MaintenanceService(erpDS);
+    // Set drop deadline here (change as needed)
+    private final LocalDate DROP_DEADLINE = LocalDate.of(2025, 1, 31);
 
-        this.courseDao = new CourseDao(erpDS);
-        this.sectionDao = new SectionDao(erpDS);
-        this.enrollmentDao = new EnrollmentDao(erpDS);
-        this.gradeDao = new GradeDao(erpDS);
+    public StudentService(DataSource ds, AccessManager a) {
+
+        this.courseDao = new CourseDao(ds);
+        this.sectionDao = new SectionDao(ds);
+        this.enrollmentDao = new EnrollmentDao(ds);
+        this.assessmentDao = new AssessmentDao(ds);
+        this.scoreDao = new ScoreDao(ds);
+        this.finalGradeDao = new FinalGradeDao(ds, assessmentDao, scoreDao, enrollmentDao);
     }
 
-
-    public List<Course> listCourses() throws SQLException {
-        return courseDao.getAllCourses();
+    // ---------------------------------------------------------
+    // COURSE CATALOG
+    // ---------------------------------------------------------
+    public List<Course> getCatalog() throws SQLException {
+        return courseDao.findAllCourses();
     }
 
-    public List<Section> listSections(int courseId) throws SQLException {
-        return sectionDao.getSectionsByCourse(courseId);
+    // ---------------------------------------------------------
+    // SECTIONS AVAILABLE FOR REGISTRATION
+    // ---------------------------------------------------------
+    public List<Section> getAvailableSections(int courseId) throws SQLException {
+        return sectionDao.findSectionsForRegistration(courseId);
     }
 
+    // ---------------------------------------------------------
+    // REGISTER STUDENT
+    // ---------------------------------------------------------
+    public void register(String studentId, int sectionId) throws Exception {
 
-    public void register(String studentId, int sectionId)
-            throws SQLException, ServiceException {
+        // Check duplicate
+        if (enrollmentDao.isAlreadyEnrolled(studentId, sectionId)) {
+            throw new Exception("You are already registered in this section.");
+        }
 
-        access.requireStudent(studentId);
-        maintenance.requireWriteAllowed();
+        // Check capacity
+        if (!sectionDao.hasSeat(sectionId)) {
+            throw new Exception("Section is full.");
+        }
 
-        Section sec = sectionDao.getSection(sectionId);
-        if (sec == null) throw new ServiceException("Section does not exist.");
-
-        // Check seat availability
-        int count = enrollmentDao.countRegistered(sectionId);
-        if (count >= sec.getCapacity())
-            throw new ServiceException("Section full.");
-
-        // Prevent duplicate
-        if (enrollmentDao.isAlreadyRegistered(studentId, sectionId))
-            throw new ServiceException("Already registered.");
-
-        enrollmentDao.createEnrollment(studentId, sectionId);
+        // Register
+        enrollmentDao.register(studentId, sectionId);
     }
 
-    // -------------------
-    // DROP
-    // -------------------
-    public void drop(String studentId, int enrollmentId)
-            throws SQLException, ServiceException {
+    // ---------------------------------------------------------
+    // DROP SECTION
+    // ---------------------------------------------------------
+    public void drop(String studentId, int sectionId) throws Exception {
 
-        access.requireStudent(studentId);
-        maintenance.requireWriteAllowed();
+        // Check drop deadline
+        if (LocalDate.now().isAfter(DROP_DEADLINE)) {
+            throw new Exception("Drop deadline has passed.");
+        }
 
-        Enrollment e = enrollmentDao.getEnrollment(enrollmentId);
-        if (e == null) throw new ServiceException("Enrollment not found.");
+        // Must be enrolled
+        if (!enrollmentDao.isAlreadyEnrolled(studentId, sectionId)) {
+            throw new Exception("You are not enrolled in this section.");
+        }
 
-        if (!e.getStudentId().equals(studentId))
-            throw new ServiceException("Cannot drop another student's course.");
-
-        enrollmentDao.markDropped(enrollmentId);
+        enrollmentDao.drop(studentId, sectionId);
     }
 
-    // -------------------
-    // GRADES
-    // -------------------
-    public List<Grade> getGrades(int enrollmentId) throws SQLException {
-        return gradeDao.getGradesForEnrollment(enrollmentId);
+    // ---------------------------------------------------------
+    // LIST MY SECTIONS (REGISTERED)
+    // ---------------------------------------------------------
+    public List<Section> getMySections(String studentId) throws SQLException {
+        return sectionDao.getSectionsForStudent(studentId);
     }
 
-    // -------------------
-    // LIST MY ENROLLMENTS
-    // -------------------
-    public List<Map<String,Object>> listMyEnrollments(String studentId)
-            throws SQLException, ServiceException {
-
-        access.requireStudent(studentId);
-        return enrollmentDao.getEnrollmentsWithSectionData(studentId);
+    // ---------------------------------------------------------
+    // TIMETABLE (same as sections)
+    // ---------------------------------------------------------
+    public List<Section> getTimetable(String studentId) throws SQLException {
+        return sectionDao.getSectionsForStudent(studentId);
     }
 
-    // -------------------
-    // TRANSCRIPT
-    // -------------------
-    public List<Map<String,Object>> exportTranscript(String studentId)
-            throws SQLException, ServiceException {
+    // ---------------------------------------------------------
+    // GET ALL GRADES FOR THIS STUDENT
+    // Final GradeDao returns FINAL grades (one per section)
+    // Scores are shown assessment-by-assessment
+    // ---------------------------------------------------------
+    public List<GradeView> getGradeBreakdown(String studentId) throws SQLException {
 
-        access.requireStudent(studentId);
-        return enrollmentDao.getTranscript(studentId);
+        List<GradeView> result = new ArrayList<>();
+
+        // sections the student is enrolled in
+        List<Section> sections = sectionDao.getSectionsForStudent(studentId);
+
+        for (Section s : sections) {
+
+            List<Assessment> assessments = assessmentDao.getBySection(s.getSectionId());
+
+            List<Score> scores = new ArrayList<>();
+            for (Assessment a : assessments) {
+                Score sc = scoreDao.getScore(a.getId(), studentId);
+                if (sc != null) scores.add(sc);
+            }
+
+            FinalGrade finalGrade = finalGradeDao.computeForStudent(s.getSectionId(), studentId);
+
+            result.add(new GradeView(
+                    s,
+                    assessments,
+                    scores,
+                    finalGrade
+            ));
+        }
+
+        return result;
+    }
+
+    // ---------------------------------------------------------
+    // Convenience: Student only sees final grades (no breakdown)
+    // ---------------------------------------------------------
+    public List<FinalGrade> getFinalGrades(String studentId) throws SQLException {
+        return finalGradeDao.getFinalGradesForStudent(studentId);
+    }
+
+    // ---------------------------------------------------------
+    // Wrapper DTO for Student Dashboard grade screen
+    // (One object per section)
+    // ---------------------------------------------------------
+    public static class GradeView {
+        private final Section section;
+        private final List<Assessment> assessments;
+        private final List<Score> scores;
+        private final FinalGrade finalGrade;
+
+        public GradeView(Section section,
+                         List<Assessment> assessments,
+                         List<Score> scores,
+                         FinalGrade finalGrade) {
+            this.section = section;
+            this.assessments = assessments;
+            this.scores = scores;
+            this.finalGrade = finalGrade;
+        }
+
+        public Section getSection() { return section; }
+        public List<Assessment> getAssessments() { return assessments; }
+        public List<Score> getScores() { return scores; }
+        public FinalGrade getFinalGrade() { return finalGrade; }
     }
 }

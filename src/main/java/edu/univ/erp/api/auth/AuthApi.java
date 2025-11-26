@@ -34,4 +34,13 @@ public class AuthApi {
             return ApiResult.error(e.getMessage());
         }
     }
+
+    public ApiResult<Void> changePassword(String username, String oldPass, String newPass) {
+        try {
+            service.changePassword(username, oldPass, newPass);
+            return ApiResult.okMessage("Change Password.");
+        } catch (Exception e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
 }

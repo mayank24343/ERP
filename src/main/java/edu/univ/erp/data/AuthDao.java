@@ -31,6 +31,21 @@ public class AuthDao {
         }
     }
 
+    //find by user_id
+    public Optional<User> findByUserId(String userId) throws SQLException {
+        String sql = "SELECT * FROM auth_users WHERE user_id=?";
+
+        try (Connection conn = authDS.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return Optional.of(mapUser(rs));
+            return Optional.empty();
+        }
+    }
+
+
     //increased failed login attempts
     public void incrementFailedAttempts(String userId) throws SQLException {
         String sql = "UPDATE auth_users SET failed_attempts = failed_attempts + 1 WHERE user_id = ?";
@@ -93,6 +108,7 @@ public class AuthDao {
     //map the result of sql query to user object
     private User mapUser(ResultSet rs) throws SQLException {
         return new User(
+                rs.getString("full_name"),
                 rs.getString("user_id"),
                 rs.getString("username"),
                 rs.getString("role"),

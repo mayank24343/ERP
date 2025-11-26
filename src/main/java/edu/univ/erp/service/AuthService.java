@@ -84,4 +84,8 @@ public class AuthService {
             throw new RuntimeException(e);
         }
     }
+
+    public void changePassword(String username, String oldPass, String newPass) throws ServiceException, SQLException {
+        return;
+    }
 }

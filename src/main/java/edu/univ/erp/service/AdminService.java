@@ -15,7 +15,6 @@ public class AdminService {
     private final AccessManager access;
 
     private final AuthDao authDao;
-    private final UserDao userDao;
     private final StudentDao studentDao;
     private final InstructorDao instructorDao;
     private final CourseDao courseDao;
@@ -26,16 +25,16 @@ public class AdminService {
         this.access = access;
 
         this.authDao = new AuthDao(authDS);
-        this.userDao = new UserDao(authDS, erpDS);
         this.studentDao = new StudentDao(erpDS);
         this.instructorDao = new InstructorDao(erpDS);
         this.courseDao = new CourseDao(erpDS);
         this.sectionDao = new SectionDao(erpDS);
         this.maintenanceService = new MaintenanceService(erpDS);
+
     }
 
     //add user
-    public void addUser(String username, String password, String role, String rollNo, String program, Integer year, String department, String designation)
+    public void addUser(String fullName, String username, String password, String role, String rollNo, String program, Integer year, String department, String designation)
             throws SQLException, ServiceException {
 
         access.requireAdmin();
@@ -61,7 +60,7 @@ public class AdminService {
         String hash = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
         //insert into auth DB
-        String authSql = "INSERT INTO auth_users (user_id, username, role, password_hash, status, failed_attempts) " + "VALUES (?, ?, ?, ?, 'active', 0)";
+        String authSql = "INSERT INTO auth_users (user_id, username, role, password_hash, status, failed_attempts,full_name) " + "VALUES (?, ?, ?, ?, 'active', 0, ?)";
 
         try (var conn = authDao.getConnection();
              var ps = conn.prepareStatement(authSql)) {
@@ -69,6 +68,7 @@ public class AdminService {
             ps.setString(2, username);
             ps.setString(3, role);
             ps.setString(4, hash);
+            ps.setString(5, fullName);
             ps.executeUpdate();
         }
 
@@ -114,7 +114,11 @@ public class AdminService {
     }
 
     public List<Course> listCourses() throws SQLException {
-        return courseDao.getAllCourses();
+        return courseDao.findAllCourses();
+    }
+
+    public List<Section> listSections() throws SQLException {
+        return sectionDao.getAllSections();
     }
 
     //add section
@@ -129,6 +133,17 @@ public class AdminService {
             throw new ServiceException("Capacity must be positive.");
 
         sectionDao.insertSection(courseId, instructorId, dayTime, room, capacity, semester, year);
+    }
+
+    public void updateSection(int sectionID, int courseId, String instructorId, String dayTime,
+                              String room, int capacity, String semester, int year) throws SQLException, ServiceException {
+        access.requireAdmin();
+        maintenanceService.requireWriteAllowed();
+
+        if (capacity <= 0)
+            throw new ServiceException("Capacity must be positive.");
+
+        sectionDao.updateSection(sectionID, courseId, instructorId, dayTime, room, capacity, semester, year);
     }
 
     //assign instructor
@@ -155,6 +170,7 @@ public class AdminService {
     }
 
     //add-drop period toggle
+
 
 
 }

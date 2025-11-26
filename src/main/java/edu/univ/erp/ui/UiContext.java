@@ -21,14 +21,14 @@ public class UiContext {
     private final InstructorService instructorService;
     private final AdminService adminService;
 
-    // Access Manager (shared)
+    // Access Manager
     private final AccessManager accessManager;
 
     public UiContext() {
         this.authDS = DataSourceProvider.getAuthDataSource();
         this.erpDS = DataSourceProvider.getERPDataSource();
 
-        // Access manager uses ERP datasource
+        // Access manager
         this.accessManager = new AccessManager(erpDS);
 
         // Services

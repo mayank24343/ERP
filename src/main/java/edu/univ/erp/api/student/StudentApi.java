@@ -2,12 +2,9 @@ package edu.univ.erp.api.student;
 
 import edu.univ.erp.api.common.ApiResult;
 import edu.univ.erp.domain.*;
-import edu.univ.erp.service.ServiceException;
 import edu.univ.erp.service.StudentService;
 
-import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
 public class StudentApi {
 
@@ -17,72 +14,93 @@ public class StudentApi {
         this.service = service;
     }
 
-    // Course list
-    public ApiResult<List<Course>> listCourses() {
+    // ---------------------------------------------------------
+    // COURSE CATALOG
+    // ---------------------------------------------------------
+    public ApiResult<List<Course>> catalog() {
         try {
-            return ApiResult.ok(service.listCourses());
-        } catch (SQLException e) {
-            return ApiResult.error(e.getMessage());
+            return ApiResult.ok(service.getCatalog());
+        } catch (Exception e) {
+            return ApiResult.error("Failed to load catalog: " + e.getMessage());
         }
     }
 
-    // Section list
-    public ApiResult<List<Section>> listSections(int courseId) {
+    // ---------------------------------------------------------
+    // AVAILABLE SECTIONS FOR A COURSE
+    // ---------------------------------------------------------
+    public ApiResult<List<Section>> getAvailableSections(int courseId) {
         try {
-            return ApiResult.ok(service.listSections(courseId));
-        } catch (SQLException e) {
-            return ApiResult.error(e.getMessage());
+            return ApiResult.ok(service.getAvailableSections(courseId));
+        } catch (Exception e) {
+            return ApiResult.error("Failed to load sections: " + e.getMessage());
         }
     }
 
-    // Register
-    public ApiResult<Void> register(String studentId, int sectionId) {
+    // ---------------------------------------------------------
+    // REGISTER
+    // ---------------------------------------------------------
+    public ApiResult<String> register(String studentId, int sectionId) {
         try {
             service.register(studentId, sectionId);
-            return ApiResult.okMessage("Registered.");
-        } catch (SQLException | ServiceException e) {
-            return ApiResult.error(e.getMessage());
+            return ApiResult.okMessage("Registered successfully.");
+        } catch (Exception e) {
+            return ApiResult.error("Registration failed: " + e.getMessage());
         }
     }
 
-    // Drop enrollment
-    public ApiResult<Void> drop(String studentId, int enrollmentId) {
+    // ---------------------------------------------------------
+    // DROP
+    // ---------------------------------------------------------
+    public ApiResult<String> drop(String studentId, int sectionId) {
         try {
-            service.drop(studentId, enrollmentId);
-            return ApiResult.okMessage("Dropped.");
-        } catch (SQLException | ServiceException e) {
-            return ApiResult.error(e.getMessage());
+            service.drop(studentId, sectionId);
+            return ApiResult.okMessage("Section dropped.");
+        } catch (Exception e) {
+            return ApiResult.error("Drop failed: " + e.getMessage());
         }
     }
 
-    // Get grades for one enrollment
-    public ApiResult<List<Grade>> getGrades(int enrollmentId) {
+    // ---------------------------------------------------------
+    // MY SECTIONS
+    // ---------------------------------------------------------
+    public ApiResult<List<Section>> mySections(String studentId) {
         try {
-            return ApiResult.ok(service.getGrades(enrollmentId));
-        } catch (SQLException e) {
-            return ApiResult.error(e.getMessage());
+            return ApiResult.ok(service.getMySections(studentId));
+        } catch (Exception e) {
+            return ApiResult.error("Failed to load sections: " + e.getMessage());
         }
     }
 
-    // List all enrollments (with section info)
-    public ApiResult<List<Map<String,Object>>> listMyEnrollments(String studentId) {
+    // ---------------------------------------------------------
+    // TIMETABLE
+    // ---------------------------------------------------------
+    public ApiResult<List<Section>> timetable(String studentId) {
         try {
-            return ApiResult.ok(service.listMyEnrollments(studentId));
-        } catch (SQLException e) {
-            return ApiResult.error(e.getMessage());
-        } catch (ServiceException e) {
-            throw new RuntimeException(e);
+            return ApiResult.ok(service.getTimetable(studentId));
+        } catch (Exception e) {
+            return ApiResult.error("Failed to load timetable: " + e.getMessage());
         }
     }
 
-    // Transcript CSV data
-    public ApiResult<List<Map<String,Object>>> exportTranscript(String studentId) {
+    // ---------------------------------------------------------
+    // GRADE BREAKDOWN (detailed)
+    // ---------------------------------------------------------
+    public ApiResult<List<StudentService.GradeView>> gradeBreakdown(String studentId) {
         try {
-            return ApiResult.ok(service.exportTranscript(studentId));
-        } catch (SQLException e) {
-            return ApiResult.error(e.getMessage());
-        } catch (ServiceException e) {
-            throw new RuntimeException(e);
+            return ApiResult.ok(service.getGradeBreakdown(studentId));
+        } catch (Exception e) {
+            return ApiResult.error("Failed to load grades: " + e.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------
+    // FINAL GRADES (simple)
+    // ---------------------------------------------------------
+    public ApiResult<List<FinalGrade>> finalGrades(String studentId) {
+        try {
+            return ApiResult.ok(service.getFinalGrades(studentId));
+        } catch (Exception e) {
+            return ApiResult.error("Failed to load final grades: " + e.getMessage());
         }
     }
 }

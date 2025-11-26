@@ -22,7 +22,7 @@ public class AdminDashboard extends JFrame {
 
     public AdminDashboard(Admin adminUser) {
         this.adminUser = adminUser;
-        this.api = new AdminApi(UiContext.get().admin());
+        this.api = new AdminApi(UiContext.get().admin(), UiContext.get().users());
         this.authApi = new AuthApi(UiContext.get().auth());
 
         initUI();
@@ -97,7 +97,7 @@ public class AdminDashboard extends JFrame {
         JButton btnMaintenance = new JButton("Toggle Maintenance");
 
         JButton[] menuButtons = {
-                btnAddUser, btnAddCourse, btnAddSection, btnAssignInstructor, btnMaintenance
+                btnAddUser, btnAddCourse, btnAddSection, btnAssignInstructor, btnMaintenance, btnEditSection, btnEditCourse
         };
 
         for (JButton b : menuButtons) {
@@ -119,12 +119,14 @@ public class AdminDashboard extends JFrame {
         btnAssignInstructor.addActionListener(e -> openAssignInstructorDialog());
         btnMaintenance.addActionListener(e -> toggleMaintenance());
         btnEditCourse.addActionListener(e -> openEditCourseDialog());
+        btnEditSection.addActionListener(e -> openEditSectionDialog());
 
         // Add to sidebar
         gbc.gridy = 0; sidebar.add(btnAddUser, gbc);
         gbc.gridy = 1; sidebar.add(btnAddCourse, gbc);
         gbc.gridy = 2; sidebar.add(btnEditCourse, gbc);
         gbc.gridy = 3; sidebar.add(btnAddSection, gbc);
+        gbc.gridy = 4; sidebar.add(btnEditSection, gbc);
         gbc.gridy = 5; sidebar.add(btnAssignInstructor, gbc);
         gbc.gridy = 6; sidebar.add(btnMaintenance, gbc);
 
@@ -147,6 +149,7 @@ public class AdminDashboard extends JFrame {
 
     //add user panel
     private void openAddUserDialog() {
+        JTextField fullName = new JTextField();
         JTextField username = new JTextField();
         JTextField password = new JTextField();
         JComboBox<String> role = new JComboBox<>(new String[]{"student", "instructor", "admin"});
@@ -158,6 +161,7 @@ public class AdminDashboard extends JFrame {
         JTextField desig = new JTextField();
 
         Object[] form = {
+                "Full Name:", fullName,
                 "Username:", username,
                 "Password:", password,
                 "Role:", role,
@@ -197,6 +201,7 @@ public class AdminDashboard extends JFrame {
 
         if (result == JOptionPane.OK_OPTION) {
             var res = api.addUser(
+                    fullName.getText(),
                     username.getText(),
                     password.getText(),
                     role.getSelectedItem().toString(),
@@ -312,12 +317,12 @@ public class AdminDashboard extends JFrame {
         //get courses
         List<Course> courses = api.listCourses().getData();
         JComboBox<String> courseDropdown = new JComboBox<>();
-        Map<String, String> courseMap = new HashMap<>();
+        Map<String, Integer> courseMap = new HashMap<>();
 
         for (Course c : courses) {
             String label = c.getCode() + " - " + c.getTitle();
             courseDropdown.addItem(label);
-            courseMap.put(label, c.getCode());
+            courseMap.put(label, c.getCourseId());
         }
 
         //get instructors
@@ -326,7 +331,7 @@ public class AdminDashboard extends JFrame {
         Map<String, String> instructorMap = new HashMap<>();
 
         for (Instructor i : instructors) {
-            String label = i.getUserId() + " - " + i.getUsername();
+            String label = i.getUsername();
             instructorDropdown.addItem(label);
             instructorMap.put(label, i.getUserId());
         }
@@ -368,9 +373,9 @@ public class AdminDashboard extends JFrame {
     }
 
     //edit section
-    private void editSectionDialog() {
+    private void openEditSectionDialog() {
 
-        // 1. Fetch sections
+        //fetch sections
         var res = api.listSections();
         if (!res.isSuccess()) {
             JOptionPane.showMessageDialog(this, res.getMessage());
@@ -382,7 +387,7 @@ public class AdminDashboard extends JFrame {
         Map<String, Section> sectionMap = new HashMap<>();
 
         for (Section s : sections) {
-            String label = "Section " + s.getId() + " - " + s.getCourseCode();
+            String label = "Section " + s.getSectionId() + " - " + s.getCourseId();
             sectionDropdown.addItem(label);
             sectionMap.put(label, s);
         }
@@ -395,7 +400,7 @@ public class AdminDashboard extends JFrame {
         for (Course c : courses) {
             String label = c.getCode() + " - " + c.getTitle();
             courseDropdown.addItem(label);
-            courseMap.put(label, c.getId());
+            courseMap.put(label, c.getCourseId());
         }
 
         // 3. Fetch instructors
@@ -404,7 +409,7 @@ public class AdminDashboard extends JFrame {
         Map<String, String> instructorMap = new HashMap<>();
 
         for (Instructor i : instructors) {
-            String label = i.getUserId() + " - " + i.getName();
+            String label = i.getUsername();
             instructorDropdown.addItem(label);
             instructorMap.put(label, i.getUserId());
         }
@@ -458,7 +463,7 @@ public class AdminDashboard extends JFrame {
             Section original = sectionMap.get(sectionDropdown.getSelectedItem());
 
             var r = api.updateSection(
-                    original.getId(),
+                    original.getSectionId(),
                     courseMap.get(courseDropdown.getSelectedItem()),
                     instructorMap.get(instructorDropdown.getSelectedItem()),
                     dayTime.getText(),
@@ -472,23 +477,46 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-
     //assign instructor
     private void openAssignInstructorDialog() {
-        JTextField sectionId = new JTextField();
-        JTextField instructorId = new JTextField();
+        var res = api.listSections();
+        if (!res.isSuccess()) {
+            JOptionPane.showMessageDialog(this, res.getMessage());
+            return;
+        }
+
+        List<Section> sections = res.getData();
+        JComboBox<String> sectionDropdown = new JComboBox<>();
+        Map<String, Section> sectionMap = new HashMap<>();
+
+        for (Section s : sections) {
+            String label = "Section " + s.getSectionId() + " - " + s.getCourseId();
+            sectionDropdown.addItem(label);
+            sectionMap.put(label, s);
+        }
+
+        // 3. Fetch instructors
+        List<Instructor> instructors = api.listInstructors().getData();
+        JComboBox<String> instructorDropdown = new JComboBox<>();
+        Map<String, String> instructorMap = new HashMap<>();
+
+        for (Instructor i : instructors) {
+            String label = i.getUsername();
+            instructorDropdown.addItem(label);
+            instructorMap.put(label, i.getUserId());
+        }
 
         Object[] form = {
-                "Section ID:", sectionId,
-                "Instructor User ID:", instructorId
+                "Section ID:", sectionDropdown,
+                "Instructor User ID:", instructorDropdown,
         };
 
         if (JOptionPane.showConfirmDialog(this, form,
                 "Assign Instructor", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 
             var r = api.assignInstructor(
-                    Integer.parseInt(sectionId.getText()),
-                    instructorId.getText()
+                    sectionMap.get(sectionDropdown.getSelectedItem()).getSectionId(),
+                    instructorMap.get(instructorDropdown.getSelectedItem())
             );
 
             JOptionPane.showMessageDialog(this, r.getMessage());

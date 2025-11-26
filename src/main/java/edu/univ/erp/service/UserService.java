@@ -19,18 +19,18 @@ public class UserService {
         return dao.findFullUserByUsername(user.getUsername());
     }
 
+    //to find all users
     public List<User> findAllUsers() throws SQLException {
-        ArrayList<User> list = new ArrayList<>();
-
-        return list;
+        return dao.findAllUsers();
     }
 
+    //to find all students
     public List<User> loadAllStudents() throws SQLException {
-        return null;
+        return dao.findAllUsers();
     }
 
+    //to find all instructors
     public List<Instructor> loadAllInstructors() throws SQLException {
-        ArrayList<Instructor> instructors = new ArrayList<>();
-        return instructors;
+        return dao.findAllInstructors();
     }
 }

@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 public class Admin extends User {
 
     public Admin(
+            String fullname,
             String userId,
             String username,
             String role,
@@ -14,6 +15,6 @@ public class Admin extends User {
             Timestamp lockedUntil,
             Timestamp lastLogin
     ) {
-        super(userId, username, role, passwordHash, status, failedAttempts, lockedUntil, lastLogin);
+        super(fullname,userId, username, role, passwordHash, status, failedAttempts, lockedUntil, lastLogin);
     }
 }

@@ -33,25 +33,4 @@ public class InstructorDao {
             ps.executeUpdate();
         }
     }
-
-    public Instructor getInstructor(String userId) throws SQLException {
-        String sql = "SELECT department, designation FROM instructors WHERE user_id = ?";
-
-        try (Connection c = ds.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setString(1, userId);
-            ResultSet rs = ps.executeQuery();
-
-            if (!rs.next()) return null;
-
-            return new Instructor(
-                    userId,
-                    null, null, null, null, 0, null, null,
-                    rs.getString("department"),
-                    rs.getString("designation")
-            );
-        }
-    }
-
 }

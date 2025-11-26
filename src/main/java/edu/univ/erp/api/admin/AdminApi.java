@@ -4,6 +4,7 @@ import edu.univ.erp.api.common.ApiResult;
 import edu.univ.erp.domain.*;
 import edu.univ.erp.service.AdminService;
 import edu.univ.erp.service.ServiceException;
+import edu.univ.erp.service.UserService;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -11,18 +12,20 @@ import java.util.List;
 public class AdminApi {
 
     private final AdminService service;
+    private final UserService userService;
 
-    public AdminApi(AdminService service) {
+    public AdminApi(AdminService service, UserService userService) {
         this.service = service;
+        this.userService = userService;
     }
 
     //add user
-    public ApiResult<Void> addUser(String username, String password, String role,
+    public ApiResult<Void> addUser(String fullName, String username, String password, String role,
                                    String rollNo, String program, Integer year,
                                    String department, String designation) {
 
         try {
-            service.addUser(username, password, role, rollNo, program, year, department, designation);
+            service.addUser(fullName, username, password, role, rollNo, program, year, department, designation);
             return ApiResult.okMessage("User created successfully.");
         }
         catch (SQLException | ServiceException e) {
@@ -86,5 +89,33 @@ public class AdminApi {
         } catch (SQLException | ServiceException e) {
             return ApiResult.error(e.getMessage());
         }
+    }
+
+    public ApiResult<List<Instructor>> listInstructors() {
+        try {
+            return ApiResult.ok(userService.loadAllInstructors());
+        } catch (SQLException e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
+
+    public ApiResult<List<Section>> listSections() {
+        try {
+            return ApiResult.ok(service.listSections());
+        } catch (Exception e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
+
+    public ApiResult<Void> updateSection(int sectionId, int courseId, String instructorId, String dayTime,
+                                         String room, int capacity, String semester, int year){
+        try {
+            service.updateSection(sectionId, courseId, instructorId, dayTime, room, capacity, semester, year);
+            return ApiResult.okMessage("Section updated.");
+        }
+        catch (SQLException | ServiceException e) {
+            return ApiResult.error(e.getMessage());
+        }
+
     }
 }

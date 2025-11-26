@@ -9,6 +9,7 @@ public class Student extends User {
     private final int year;
 
     public Student(
+            String fullName,
             String userId,
             String username,
             String role,
@@ -23,7 +24,7 @@ public class Student extends User {
             String program,
             int year
     ) {
-        super(userId, username, role, passwordHash, status, failedAttempts, lockedUntil, lastLogin);
+        super(fullName,userId, username, role, passwordHash, status, failedAttempts, lockedUntil, lastLogin);
         this.rollNo = rollNo;
         this.program = program;
         this.year = year;
