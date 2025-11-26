@@ -12,6 +12,7 @@ import edu.univ.erp.domain.Section;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,18 +74,22 @@ public class AdminDashboard extends JFrame {
         JButton bSections = createNavButton("Manage Sections");
         JButton bAssign = createNavButton("Assign Instructor");
         JButton bMaintenance = createNavButton("Maintenance Mode");
+        JButton btnAddDrop = createNavButton("Set Add/Drop Deadline");
+
 
         bUsers.addActionListener(e -> showCard("users"));
         bCourses.addActionListener(e -> showCard("courses"));
         bSections.addActionListener(e -> showCard("sections"));
-        bAssign.addActionListener(e -> showCard("assign"));
-        bMaintenance.addActionListener(e -> showCard("maintenance"));
+        bAssign.addActionListener(e -> openAssignInstructorDialog());
+        bMaintenance.addActionListener(e ->  toggleMaintenance());
+        btnAddDrop.addActionListener(e -> openAddDropDialog());
 
         navPanel.add(bUsers);
         navPanel.add(bCourses);
         navPanel.add(bSections);
         navPanel.add(bAssign);
         navPanel.add(bMaintenance);
+        navPanel.add(btnAddDrop);
 
         //cards layout
         cardLayout = new CardLayout();
@@ -94,15 +99,11 @@ public class AdminDashboard extends JFrame {
         initUsersCard();
         initCoursesCard();
         initSectionsCard();
-        initAssignCard();
-        initMaintenanceCard();
 
         contentPanel.add(homeCard, "home");
         contentPanel.add(usersCard, "users");
         contentPanel.add(coursesCard, "courses");
         contentPanel.add(sectionsCard, "sections");
-        contentPanel.add(assignCard, "assign");
-        contentPanel.add(maintenanceCard, "maintenance");
 
         add(createTopBar(adminUser.getFullname()), BorderLayout.NORTH);//topbar
         maintenanceBanner = buildMaintenanceBanner(maintenanceApi.isMaintenanceOn().getData());
@@ -282,36 +283,6 @@ public class AdminDashboard extends JFrame {
 
         sectionsCard.add(top, BorderLayout.NORTH);
         sectionsCard.add(new JLabel("Manage sections using the controls above."), BorderLayout.CENTER);
-    }
-
-    //assign instructor to section
-    private void initAssignCard() {
-        assignCard = new JPanel(new BorderLayout());
-        assignCard.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
-
-        JButton assign = new JButton("Assign Instructor");
-        assign.addActionListener(e -> openAssignInstructorDialog());
-
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(assign);
-
-        assignCard.add(top, BorderLayout.NORTH);
-        assignCard.add(new JLabel("Assign instructors to sections."), BorderLayout.CENTER);
-    }
-
-    //toggle maintenance
-    private void initMaintenanceCard() {
-        maintenanceCard = new JPanel(new BorderLayout());
-        maintenanceCard.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
-
-        JButton toggle = new JButton("Toggle Maintenance Mode");
-        toggle.addActionListener(e -> toggleMaintenance());
-
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(toggle);
-
-        maintenanceCard.add(top, BorderLayout.NORTH);
-        maintenanceCard.add(new JLabel("System maintenance controls."), BorderLayout.CENTER);
     }
 
     //add user panel
@@ -715,5 +686,31 @@ public class AdminDashboard extends JFrame {
         maintenanceBanner.revalidate();
         maintenanceBanner.repaint();
     }
+
+    //add drop date setter
+    private void openAddDropDialog() {
+        JTextField dateField = new JTextField("2025-01-15"); // yyyy-mm-dd
+
+        Object[] form = {
+                "Set Add/Drop Deadline (YYYY-MM-DD):", dateField
+        };
+
+        if (JOptionPane.showConfirmDialog(this, form,
+                "Update Add/Drop Deadline",
+                JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+
+            try {
+                LocalDate d = LocalDate.parse(dateField.getText().trim());
+
+                var r = UiContext.get().adddrop().setDeadline(d);
+                JOptionPane.showMessageDialog(this, r.getMessage());
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid date format! Use YYYY-MM-DD\n" + ex.getMessage());
+            }
+        }
+    }
+
 }
 

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class AdminService {
-
     private final AccessManager access;
 
     private final AuthDao authDao;
@@ -21,6 +20,7 @@ public class AdminService {
     private final SectionDao sectionDao;
     private final MaintenanceService maintenanceService;
 
+    //constructor
     public AdminService(DataSource authDS, DataSource erpDS, AccessManager access) {
         this.access = access;
 
@@ -34,8 +34,7 @@ public class AdminService {
     }
 
     //add user
-    public void addUser(String fullName, String username, String password, String role, String rollNo, String program, Integer year, String department, String designation)
-            throws SQLException, ServiceException {
+    public void addUser(String fullName, String username, String password, String role, String rollNo, String program, Integer year, String department, String designation) throws SQLException, ServiceException {
 
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
@@ -75,8 +74,7 @@ public class AdminService {
     }
 
     //add course
-    public void addCourse(String code, String title, int credits)
-            throws SQLException, ServiceException {
+    public void addCourse(String code, String title, int credits) throws SQLException, ServiceException {
 
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
@@ -88,8 +86,8 @@ public class AdminService {
         courseDao.insertCourse(code, title, credits);
     }
 
-    public void updateCourse(String code, String title, int credits)
-            throws SQLException, ServiceException {
+    //update course
+    public void updateCourse(String code, String title, int credits) throws SQLException, ServiceException {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
         if (code.isEmpty()) throw new ServiceException("Code cannot be empty.");
@@ -99,19 +97,18 @@ public class AdminService {
         courseDao.updateCourse(code, title, credits);
     }
 
+    //list courses
     public List<Course> listCourses() throws SQLException {
         return courseDao.findAllCourses();
     }
 
+    //list all sections
     public List<Section> listSections() throws SQLException {
         return sectionDao.getAllSections();
     }
 
     //add section
-    public void addSection(int courseId, String instructorId, String dayTime,
-                           String room, int capacity, String semester, int year)
-            throws SQLException, ServiceException {
-
+    public void addSection(int courseId, String instructorId, String dayTime, String room, int capacity, String semester, int year) throws SQLException, ServiceException {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
 
@@ -121,8 +118,7 @@ public class AdminService {
         sectionDao.insertSection(courseId, instructorId, dayTime, room, capacity, semester, year);
     }
 
-    public void updateSection(int sectionID, int courseId, String instructorId, String dayTime,
-                              String room, int capacity, String semester, int year) throws SQLException, ServiceException {
+    public void updateSection(int sectionID, int courseId, String instructorId, String dayTime, String room, int capacity, String semester, int year) throws SQLException, ServiceException {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
 
@@ -133,8 +129,7 @@ public class AdminService {
     }
 
     //assign instructor
-    public void assignInstructor(int sectionId, String instructorId)
-            throws SQLException, ServiceException {
+    public void assignInstructor(int sectionId, String instructorId) throws SQLException, ServiceException {
 
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
@@ -143,8 +138,7 @@ public class AdminService {
     }
 
     //maintenance mode toggle
-    public void setMaintenance(boolean on)
-            throws SQLException, ServiceException {
+    public void setMaintenance(boolean on) throws SQLException, ServiceException {
 
         access.requireAdmin();
         if (on){
@@ -154,9 +148,4 @@ public class AdminService {
             maintenanceService.turnOff();
         }
     }
-
-    //add-drop period toggle
-
-
-
 }

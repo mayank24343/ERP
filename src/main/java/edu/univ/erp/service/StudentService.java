@@ -19,10 +19,7 @@ public class StudentService {
     private final AssessmentDao assessmentDao;
     private final ScoreDao scoreDao;
     private final FinalGradeDao finalGradeDao;
-    private final MaintenanceDao maintenanceDao;
-
-    // Set drop deadline here (change as needed)
-    private final LocalDate DROP_DEADLINE = LocalDate.of(2025, 1, 31);
+    private final MaintenanceService maintenanceService;
 
     //constructor
     public StudentService(DataSource ds, AccessManager a) {
@@ -33,7 +30,7 @@ public class StudentService {
         this.assessmentDao = new AssessmentDao(ds);
         this.scoreDao = new ScoreDao(ds);
         this.finalGradeDao = new FinalGradeDao(ds, assessmentDao, scoreDao, enrollmentDao);
-        this.maintenanceDao = new MaintenanceDao(ds);
+        this.maintenanceService = new MaintenanceService(ds);
     }
 
     //course catalog
@@ -48,10 +45,13 @@ public class StudentService {
 
     //register student
     public void register(String studentId, int sectionId) throws Exception {
-        //maintenance should be off
-        if (maintenanceDao.isMaintenanceOn()){
-            throw new ServiceException("Maintenance Mode On. View Only.");
+        //throw error if after drop deadline or not enrolled in course
+        if (LocalDate.now().isAfter(UiContext.get().adddrop().getDeadline().getData())) {
+            throw new Exception("Registration deadline has passed.");
         }
+
+        //maintenance should be off
+        maintenanceService.requireWriteAllowed();
 
         //access management
         UiContext.get().access().requireStudent(studentId);
@@ -72,15 +72,13 @@ public class StudentService {
     //drop course
     public void drop(String studentId, int sectionId) throws Exception {
         //maintenance should be off
-        if (maintenanceDao.isMaintenanceOn()){
-            throw new ServiceException("Maintenance Mode On. View Only.");
-        }
+        maintenanceService.requireWriteAllowed();
 
         //access management
         UiContext.get().access().requireStudent(studentId);
 
         //throw error if after drop deadline or not enrolled in course
-        if (LocalDate.now().isAfter(DROP_DEADLINE)) {
+        if (LocalDate.now().isAfter(UiContext.get().adddrop().getDeadline().getData())) {
             throw new Exception("Drop deadline has passed.");
         }
 

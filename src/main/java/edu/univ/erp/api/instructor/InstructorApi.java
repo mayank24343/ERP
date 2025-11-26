@@ -4,6 +4,7 @@ import edu.univ.erp.api.common.ApiResult;
 import edu.univ.erp.domain.*;
 import edu.univ.erp.service.InstructorService;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class InstructorApi {
@@ -24,27 +25,27 @@ public class InstructorApi {
     }
 
     //students enrolled in section
-    public ApiResult<List<Student>> getEnrolledStudents(int sectionId) {
+    public ApiResult<List<Student>> getEnrolledStudents(int sectionId, String instructorId) {
         try {
-            return ApiResult.ok(service.getEnrolledStudents(sectionId));
+            return ApiResult.ok(service.getEnrolledStudents(sectionId, instructorId));
         } catch (Exception e) {
             return ApiResult.error("Failed To Load Enrolled Students: " + e.getMessage());
         }
     }
 
     //assessment list
-    public ApiResult<List<Assessment>> listAssessments(int sectionId) {
+    public ApiResult<List<Assessment>> listAssessments(int sectionId, String instructorId) {
         try {
-            return ApiResult.ok(service.getAssessments(sectionId));
+            return ApiResult.ok(service.getAssessments(sectionId, instructorId));
         } catch (Exception e) {
             return ApiResult.error("Failed To Load Assessments: " + e.getMessage());
         }
     }
 
     //add assessment
-    public ApiResult<Void> addAssessment(Assessment a) {
+    public ApiResult<Void> addAssessment(Assessment a, String instructorId) {
         try {
-            service.addAssessment(a);
+            service.addAssessment(a,  instructorId);
             return ApiResult.okMessage("Assessment Added.");
         } catch (Exception e) {
             return ApiResult.error("Failed To Add Assessment: " + e.getMessage());
@@ -52,9 +53,9 @@ public class InstructorApi {
     }
 
     //update assessment
-    public ApiResult<Void> updateAssessment(Assessment a) {
+    public ApiResult<Void> updateAssessment(Assessment a, String instructorId) {
         try {
-            service.updateAssessment(a);
+            service.updateAssessment(a, instructorId);
             return ApiResult.okMessage("Assessment Updated.");
         } catch (Exception e) {
             return ApiResult.error("Failed To Update Assessment: " + e.getMessage());
@@ -62,27 +63,27 @@ public class InstructorApi {
     }
 
     //delete assessment
-    public ApiResult<Void> deleteAssessment(int assessmentId) {
+    public ApiResult<Void> deleteAssessment(Assessment a, String instructorId) {
         try {
-            service.deleteAssessment(assessmentId);
+            service.deleteAssessment(a,  instructorId);
             return ApiResult.okMessage("Assessment Deleted.");
         } catch (Exception e) {
             return ApiResult.error("Failed To Delete Assessment: " + e.getMessage());
         }
     }
 
-    public ApiResult<List<Score>> getScores(int assessmentId) {
+    public ApiResult<List<Score>> getScores(int assessmentId, String instructorId, int sectionId) {
         try {
-            return ApiResult.ok(service.getScoresForAssessment(assessmentId));
+            return ApiResult.ok(service.getScoresForAssessment(assessmentId,  sectionId, instructorId));
         } catch (Exception e) {
             return ApiResult.error("Failed to load scores: " + e.getMessage());
         }
     }
 
     //save scores to db
-    public ApiResult<String> saveScores(List<Score> scores) {
+    public ApiResult<String> saveScores(List<Score> scores, String instructorId, int sectionId) {
         try {
-            service.saveScores(scores);
+            service.saveScores(scores, sectionId,  instructorId);
             return ApiResult.okMessage("Scores Saved.");
         } catch (Exception e) {
             return ApiResult.error("Failed To Save Scores: " + e.getMessage());
@@ -90,18 +91,18 @@ public class InstructorApi {
     }
 
    //see preview of final grades
-    public ApiResult<List<FinalGrade>> previewFinalGrades(int sectionId) {
+    public ApiResult<List<FinalGrade>> previewFinalGrades(int sectionId,  String instructorId) {
         try {
-            return ApiResult.ok(service.computeFinalsPreview(sectionId));
+            return ApiResult.ok(service.computeFinalsPreview(sectionId,  instructorId));
         } catch (Exception e) {
             return ApiResult.error("Failed To Compute Final Grades: " + e.getMessage());
         }
     }
 
     //save final grades
-    public ApiResult<String> finalizeGrades(int sectionId) {
+    public ApiResult<String> finalizeGrades(int sectionId,  String instructorId) {
         try {
-            service.computeAndStoreFinals(sectionId);
+            service.computeAndStoreFinals(sectionId,   instructorId);
             return ApiResult.okMessage("Final grades computed and saved.");
         } catch (Exception e) {
             return ApiResult.error("Failed to finalize grades: " + e.getMessage());
@@ -109,9 +110,9 @@ public class InstructorApi {
     }
 
     //get component wise & student wise grades for section
-    public ApiResult<InstructorService.SectionGradeSummary> getGradebook(int sectionId) {
+    public ApiResult<InstructorService.SectionGradeSummary> getGradebook(int sectionId,  String instructorId) {
         try {
-            return ApiResult.ok(service.getSectionGradeSummary(sectionId));
+            return ApiResult.ok(service.getSectionGradeSummary(sectionId, instructorId));
         } catch (Exception e) {
             return ApiResult.error("Failed To Load Grades: " + e.getMessage());
         }

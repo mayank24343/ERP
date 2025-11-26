@@ -39,7 +39,6 @@ public class FinalGradeDao {
         //get slabs
         List<GradeSlab> slabs = slabDao.getSlabs(sectionId);
 
-
         //for each student, calculate final grade
         for (String studentId : studentIds) {
             double percentage = computeFinalPercentageForStudent(sectionId, studentId, assessments);

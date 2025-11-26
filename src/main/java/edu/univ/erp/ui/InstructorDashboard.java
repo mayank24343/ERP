@@ -367,7 +367,7 @@ public class InstructorDashboard extends JFrame {
     private void refreshAssessments() {
         if (selectedSection == null) return;
 
-        ApiResult<List<Assessment>> r = api.listAssessments(selectedSection.getSectionId());
+        ApiResult<List<Assessment>> r = api.listAssessments(selectedSection.getSectionId(), instructorUser.getUserId());
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
@@ -402,7 +402,7 @@ public class InstructorDashboard extends JFrame {
                         Double.parseDouble(maxMarks.getText()),
                         Double.parseDouble(weight.getText())
                 );
-                api.addAssessment(a);
+                api.addAssessment(a, instructorUser.getUserId());
                 refreshAssessments();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage());
@@ -442,7 +442,7 @@ public class InstructorDashboard extends JFrame {
                         Double.parseDouble(weight.getText())
                 );
 
-                api.updateAssessment(updated);
+                api.updateAssessment(updated, instructorUser.getUserId());
                 refreshAssessments();
 
             } catch (Exception ex) {
@@ -462,7 +462,7 @@ public class InstructorDashboard extends JFrame {
                 "Delete assessment?", "Confirm",
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 
-            api.deleteAssessment(a.getId());
+            api.deleteAssessment(a, instructorUser.getUserId());
             refreshAssessments();
         }
     }
@@ -520,7 +520,7 @@ public class InstructorDashboard extends JFrame {
         if (selectedSection == null) return;
 
         ApiResult<InstructorService.SectionGradeSummary> r =
-                api.getGradebook(selectedSection.getSectionId());
+                api.getGradebook(selectedSection.getSectionId(), instructorUser.getUserId());
 
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
@@ -534,7 +534,7 @@ public class InstructorDashboard extends JFrame {
     private void saveScoresFromGrid() {
         List<Score> list = gradebookModel.extractScores();
 
-        ApiResult<String> r = api.saveScores(list);
+        ApiResult<String> r = api.saveScores(list, instructorUser.getUserId(), selectedSection.getSectionId());
         JOptionPane.showMessageDialog(this, r.getMessage());
     }
 
@@ -595,7 +595,7 @@ public class InstructorDashboard extends JFrame {
         if (selectedSection == null) return;
 
         ApiResult<List<FinalGrade>> r =
-                api.previewFinalGrades(selectedSection.getSectionId());
+                api.previewFinalGrades(selectedSection.getSectionId(), instructorUser.getUserId());
 
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
@@ -610,7 +610,7 @@ public class InstructorDashboard extends JFrame {
         if (selectedSection == null) return;
 
         ApiResult<String> r =
-                api.finalizeGrades(selectedSection.getSectionId());
+                api.finalizeGrades(selectedSection.getSectionId(), instructorUser.getUserId());
 
         JOptionPane.showMessageDialog(this, r.getMessage());
     }
@@ -644,7 +644,7 @@ public class InstructorDashboard extends JFrame {
         if (selectedSection == null) return;
 
         //grades for section
-        ApiResult<InstructorService.SectionGradeSummary> r = api.getGradebook(selectedSection.getSectionId());
+        ApiResult<InstructorService.SectionGradeSummary> r = api.getGradebook(selectedSection.getSectionId(), instructorUser.getUserId());
 
         if (!r.isSuccess()) {
             statsCard.add(new JLabel("Unable to load statistics."), BorderLayout.CENTER);
@@ -784,7 +784,7 @@ public class InstructorDashboard extends JFrame {
 
     //load slabs for section
     private void loadSlabs() {
-        ApiResult<List<GradeSlab>> r = slabApi.list(selectedSection.getSectionId());
+        ApiResult<List<GradeSlab>> r = slabApi.list(selectedSection.getSectionId(), instructorUser.getUserId());
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
@@ -813,7 +813,7 @@ public class InstructorDashboard extends JFrame {
 
                 validateSlab(L, lo, hi);
 
-                ApiResult<String> r = slabApi.add(selectedSection.getSectionId(), L, lo, hi);
+                ApiResult<String> r = slabApi.add(selectedSection.getSectionId(), L, lo, hi, instructorUser.getUserId());
 
                 JOptionPane.showMessageDialog(this, r.getMessage());
                 loadSlabs();
@@ -856,7 +856,7 @@ public class InstructorDashboard extends JFrame {
                 validateSlab(L, lo, hi);
 
                 GradeSlab updated = new GradeSlab(g.getId(),selectedSection.getSectionId(), L, lo, hi);
-                ApiResult<String> r = slabApi.update(updated);
+                ApiResult<String> r = slabApi.update(updated, selectedSection.getSectionId(), instructorUser.getUserId());
 
                 JOptionPane.showMessageDialog(this, r.getMessage());
                 loadSlabs();
@@ -882,7 +882,7 @@ public class InstructorDashboard extends JFrame {
                 "Delete slab \"" + g.getLetter() + "\"?",
                 "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 
-            ApiResult<String> r = slabApi.delete(g.getId());
+            ApiResult<String> r = slabApi.delete(g.getId(), selectedSection.getSectionId(), instructorUser.getUserId());
             JOptionPane.showMessageDialog(this, r.getMessage());
             loadSlabs();
         }

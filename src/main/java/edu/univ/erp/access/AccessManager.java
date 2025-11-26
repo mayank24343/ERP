@@ -46,9 +46,7 @@ public class AccessManager {
     }
 
     //instructor & section access
-    public void requireInstructorForSection(String instructorId, int sectionId)
-            throws ServiceException {
-
+    public void requireInstructorForSection(String instructorId, int sectionId) throws ServiceException {
         User u = current();
         if (!"instructor".equalsIgnoreCase(u.getRole()) ||
                 !u.getUserId().equals(instructorId)) {

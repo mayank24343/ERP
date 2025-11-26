@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InstructorDao {
-
     private final DataSource ds;
 
     public InstructorDao(DataSource ds) {

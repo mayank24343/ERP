@@ -45,8 +45,10 @@ public class EnrollmentDao {
     // ---------------------------------------------------------
     public void register(String studentId, int sectionId) throws SQLException {
         String sql = """
-            INSERT INTO enrollments (student_id, section_id, status)
-            VALUES (?, ?, 'registered')
+            INSERT INTO enrollments (student_id, section_id, status) VALUES (?, ?, 'registered')
+                                        ON DUPLICATE KEY UPDATE
+                                            status = 'registered';
+                                        
         """;
 
         try (Connection conn = ds.getConnection();
