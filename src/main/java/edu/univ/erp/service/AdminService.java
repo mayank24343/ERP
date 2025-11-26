@@ -39,17 +39,17 @@ public class AdminService {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
 
-        if (username.isEmpty() || password.isEmpty() || role.isEmpty()) throw new ServiceException("Username and password and role are required.");
+        if (username.isEmpty() || password.isEmpty() || role.isEmpty() || username.isBlank() || password.isEmpty() || role.isBlank()) throw new ServiceException("Username and password and role are required.");
         role = role.toLowerCase().trim();
         if (!List.of("student", "instructor", "admin").contains(role))
             throw new ServiceException("Invalid role: " + role);
         if (role == "student"){
-            if (rollNo.isEmpty() || program.isEmpty()) throw new ServiceException("Roll No and Program are required.");
+            if (rollNo.isEmpty() || program.isEmpty() || rollNo.isBlank() || program.isBlank()) throw new ServiceException("Roll No and Program are required.");
             if (year <= 0) throw new ServiceException("Year must be greater than 0.");
         }
         if (role == "instructor"){
-            if (department.isEmpty()) throw new ServiceException("Department is required.");
-            if (designation.isEmpty()) throw new ServiceException("Designation is required.");
+            if (department.isEmpty() || department.isBlank()) throw new ServiceException("Department is required.");
+            if (designation.isEmpty() || designation.isBlank()) throw new ServiceException("Designation is required.");
         }
 
         //generate user_id (UUID)
@@ -75,12 +75,11 @@ public class AdminService {
 
     //add course
     public void addCourse(String code, String title, int credits) throws SQLException, ServiceException {
-
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
 
-        if (code.isEmpty()) throw new ServiceException("Code cannot be empty.");
-        if (title.isEmpty()) throw new ServiceException("Title cannot be empty.");
+        if (code.isEmpty() || code.isBlank()) throw new ServiceException("Code cannot be empty.");
+        if (title.isEmpty() || code.isBlank()) throw new ServiceException("Title cannot be empty.");
         if (credits <= 0) throw new ServiceException("Credits must be positive.");
 
         courseDao.insertCourse(code, title, credits);
@@ -90,8 +89,8 @@ public class AdminService {
     public void updateCourse(String code, String title, int credits) throws SQLException, ServiceException {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
-        if (code.isEmpty()) throw new ServiceException("Code cannot be empty.");
-        if (title.isEmpty()) throw new ServiceException("Title cannot be empty.");
+        if (code.isBlank() || code.isEmpty()) throw new ServiceException("Code cannot be empty.");
+        if (title.isEmpty() || title.isBlank()) throw new ServiceException("Title cannot be empty.");
         if (credits <= 0) throw new ServiceException("Credits must be positive.");
 
         courseDao.updateCourse(code, title, credits);
@@ -111,7 +110,13 @@ public class AdminService {
     public void addSection(int courseId, String instructorId, String dayTime, String room, int capacity, String semester, int year) throws SQLException, ServiceException {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
-
+        if (courseId <= 0) throw new ServiceException("Course Id must be positive.");
+        if (instructorId.isEmpty() || instructorId.isBlank()) throw new ServiceException("Instructor Id is required.");
+        if (dayTime.isEmpty() || dayTime.isBlank()) throw new ServiceException("Day Time is required.");
+        if (room.isEmpty() || room.isBlank()) throw new ServiceException("Room is required.");
+        if (capacity <= 0) throw new ServiceException("Capacity is positive.");
+        if (year <= 0) throw new ServiceException("Year is required.");
+        if (semester.isEmpty() || semester.isBlank()) throw new ServiceException("Semester is required.");
         if (capacity <= 0)
             throw new ServiceException("Capacity must be positive.");
 
@@ -121,6 +126,16 @@ public class AdminService {
     public void updateSection(int sectionID, int courseId, String instructorId, String dayTime, String room, int capacity, String semester, int year) throws SQLException, ServiceException {
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
+        if (sectionID <= 0) throw new ServiceException("Section Id is required.");
+        if (courseId <= 0) throw new ServiceException("Course Id must be positive.");
+        if (instructorId.isEmpty() || instructorId.isBlank()) throw new ServiceException("Instructor Id is required.");
+        if (dayTime.isEmpty() || dayTime.isBlank()) throw new ServiceException("Day Time is required.");
+        if (room.isEmpty() || room.isBlank()) throw new ServiceException("Room is required.");
+        if (capacity <= 0) throw new ServiceException("Capacity is positive.");
+        if (year <= 0) throw new ServiceException("Year is required.");
+        if (semester.isEmpty() || semester.isBlank()) throw new ServiceException("Semester is required.");
+        if (capacity <= 0)
+            throw new ServiceException("Capacity must be positive.");
 
         if (capacity <= 0)
             throw new ServiceException("Capacity must be positive.");
@@ -130,10 +145,9 @@ public class AdminService {
 
     //assign instructor
     public void assignInstructor(int sectionId, String instructorId) throws SQLException, ServiceException {
-
         access.requireAdmin();
         maintenanceService.requireWriteAllowed();
-
+        if (sectionId <= 0) throw new ServiceException("Section Id is required.");
         sectionDao.updateInstructor(sectionId, instructorId);
     }
 
