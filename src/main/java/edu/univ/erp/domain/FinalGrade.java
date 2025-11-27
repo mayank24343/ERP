@@ -1,12 +1,11 @@
 package edu.univ.erp.domain;
 
 public class FinalGrade {
-
     private final Student student;
     private final Section section;
     private final double percentage;
     private final String letter;
-
+    //constructor
     public FinalGrade(Student student, Section section, double percentage, String letter) {
         this.student = student;
         this.section = section;
@@ -14,6 +13,7 @@ public class FinalGrade {
         this.letter = letter;
     }
 
+    //getters
     public Student getStudent() { return student; }
     public Section getSection() { return section; }
     public double getPercentage() { return percentage; }

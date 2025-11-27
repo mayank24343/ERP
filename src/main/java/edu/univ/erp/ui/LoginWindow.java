@@ -99,7 +99,7 @@ public class LoginWindow extends JFrame {
         passwordField.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
 
         //eye button for password
-        JButton eyeBtn = getEyeBtn();
+        JButton eyeBtn = getShowBtn();
         passwordPanel.add(passwordField, BorderLayout.CENTER);
         passwordPanel.add(eyeBtn, BorderLayout.EAST);
 
@@ -119,13 +119,11 @@ public class LoginWindow extends JFrame {
         gbc.gridy = 5;
         gbc.insets = new Insets(18, 0, 0, 0);
         card.add(loginButton, gbc);
-
-        // Center window
         setLocationRelativeTo(null);
     }
 
-    private JButton getEyeBtn() {
-        JButton eyeBtn = new JButton("👁" );
+    private JButton getShowBtn() {
+        JButton eyeBtn = new JButton("Show" );
         eyeBtn.setPreferredSize(new Dimension(45, 30));
         eyeBtn.setFocusPainted(false);
         eyeBtn.setBorder(null);
@@ -134,10 +132,10 @@ public class LoginWindow extends JFrame {
         eyeBtn.addActionListener(e -> {
             if (passwordField.getEchoChar() == 0) {
                 passwordField.setEchoChar('•');  // hide
-                eyeBtn.setText("👁");
+                eyeBtn.setText("Show");
             } else {
                 passwordField.setEchoChar((char) 0);  // show
-                eyeBtn.setText("🙈");
+                eyeBtn.setText("Hide");
             }
         });
         return eyeBtn;
@@ -147,13 +145,12 @@ public class LoginWindow extends JFrame {
     private void loginUser() {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
-
         if (username.isBlank() || password.isBlank()) {
             JOptionPane.showMessageDialog(this, "Please Enter Both Username and Password.");
             return;
         }
 
-        // Authenticate the user & Open dashboard if user authenticated & loaded
+        //authenticate the user, open dashboard if user authenticated & loaded
         var res= authApi.authenticateUser(username,password);
         if (res.getData() == null) {
             JOptionPane.showMessageDialog(this, res.getMessage(), "Login Failed", JOptionPane.ERROR_MESSAGE);
@@ -193,21 +190,5 @@ public class LoginWindow extends JFrame {
                 JOptionPane.showMessageDialog(null, "Unknown role: " + user.getRole());
                 System.exit(1);
         }
-    }
-
-    //main
-    public static void main(String[] args) {
-        FlatLightLaf.setup(); // enable flatlaf
-        UiContext ctx = UiContext.get();
-
-        javax.sql.DataSource authDS = DataSourceProvider.getAuthDataSource();
-        javax.sql.DataSource erpDS = DataSourceProvider.getERPDataSource();
-
-        AuthApi authApi = new AuthApi(new AuthService(authDS));
-        UserApi userApi = new UserApi(new UserService(authDS, erpDS));
-
-        SwingUtilities.invokeLater(() ->
-                new LoginWindow(ctx.auth(), ctx.users()).setVisible(true)
-        );
     }
 }

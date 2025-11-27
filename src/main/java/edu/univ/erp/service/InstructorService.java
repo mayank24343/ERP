@@ -5,7 +5,6 @@ import edu.univ.erp.data.*;
 import edu.univ.erp.domain.*;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +18,6 @@ public class InstructorService {
     private final MaintenanceService maintenanceService;
 
     public InstructorService(DataSource ds, AccessManager a) {
-
         this.sectionDao = new SectionDao(ds);
         this.enrollmentDao = new EnrollmentDao(ds);
         this.assessmentDao = new AssessmentDao(ds);
@@ -35,57 +33,48 @@ public class InstructorService {
         return sectionDao.getSectionsByInstructor(instructorId);
     }
 
-    //get students in section
-    public List<Student> getEnrolledStudents(int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
-        return enrollmentDao.getEnrolledStudents(sectionId);
-    }
-
-    //assessment list
-    public List<Assessment> getAssessments(int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
-        return assessmentDao.getBySection(sectionId);
-    }
-
-    public void addAssessment(Assessment a, String instructorId) throws SQLException, ServiceException {
+    //add assessment
+    public void addAssessment(Assessment a, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
         assessmentDao.insert(a);
     }
 
-    public void updateAssessment(Assessment a, String instructorId) throws SQLException, ServiceException {
-        maintenanceService.requireWriteAllowed();
-        accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
-        assessmentDao.update(a);
-    }
-
-    public void deleteAssessment(Assessment a, String instructorId) throws SQLException,  ServiceException {
+    //delete assessments
+    public void deleteAssessment(Assessment a, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
         scoreDao.deleteByAssessment(a.getId());
         assessmentDao.delete(a.getId());
     }
 
-    //get scores for assessment
-    public List<Score> getScoresForAssessment(int assessmentId, int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
-        return scoreDao.getScoresByAssessment(assessmentId);
+    //update assessments
+    public void updateAssessment(Assessment a, String instructorId) throws Exception {
+        maintenanceService.requireWriteAllowed();
+        accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
+        assessmentDao.update(a);
     }
 
-    public void saveScores(List<Score> scores, int sectionId, String instructorId) throws SQLException, ServiceException {
+    //assessment list
+    public List<Assessment> getAssessments(int sectionId, String instructorId) throws Exception {
+        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
+        return assessmentDao.getBySection(sectionId);
+    }
+
+    public void saveScores(List<Score> scores, int sectionId, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         scoreDao.upsertScores(scores);
     }
 
     //compute final grades
-    public List<FinalGrade> computeFinalsPreview(int sectionId, String instructorId) throws SQLException, ServiceException {
+    public List<FinalGrade> computeFinalsPreview(int sectionId, String instructorId) throws Exception {
         accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         return finalGradeDao.computeFinals(sectionId);
     }
 
     //compute + store in final_grades table
-    public void computeAndStoreFinals(int sectionId, String instructorId) throws SQLException, ServiceException {
+    public void computeAndStoreFinals(int sectionId, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         finalGradeDao.computeAndStoreFinals(sectionId);
@@ -93,7 +82,7 @@ public class InstructorService {
     }
 
     //final grades for a section
-    public SectionGradeSummary getSectionGradeSummary(int sectionId, String instructorId) throws SQLException,  ServiceException {
+    public SectionGradeSummary getSectionGradeSummary(int sectionId, String instructorId) throws Exception {
         accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         System.out.println("HERE");
         List<Student> students = enrollmentDao.getEnrolledStudents(sectionId);

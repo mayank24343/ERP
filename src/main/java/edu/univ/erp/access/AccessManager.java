@@ -5,11 +5,9 @@ import edu.univ.erp.domain.User;
 import edu.univ.erp.service.ServiceException;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 
 public class AccessManager {
     private final SectionDao sectionDao;
-
     //constructor
     public AccessManager(DataSource erpDS) {
         this.sectionDao = new SectionDao(erpDS);
@@ -23,50 +21,42 @@ public class AccessManager {
         return u;
     }
 
-    //admin access
-    public void requireAdminAccess() throws ServiceException {
-        if (!"admin".equalsIgnoreCase(current().getRole())) {
-            throw new ServiceException("Access denied: Admin only.");
-        }
-    }
-
     //student access
     public void requireStudentAccess(String studentId) throws ServiceException {
-        User u = current();
+        User u = current();//get current user
         if (!"student".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(studentId)) {
-            throw new ServiceException("Not allowed: Student access only.");
+            throw new ServiceException("Access Denied.");
         }
     }
 
     //instructor access
     public void requireInstructorAccess(String instructorId) throws ServiceException {
-        User u = current();
+        User u = current(); //get current user
         if (!"instructor".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(instructorId)) {
-            throw new ServiceException("Not allowed: Instructor access only.");
+            throw new ServiceException("Access Denied.");
         }
     }
 
     //instructor & section access
-    public void requireInstructorForSectionAccess(String instructorId, int sectionId) throws ServiceException {
-        User u = current();
-        if (!"instructor".equalsIgnoreCase(u.getRole()) ||
-                !u.getUserId().equals(instructorId)) {
-            throw new ServiceException("Not allowed: Instructor access only.");
+    public void requireInstructorForSectionAccess(String instructorId, int sectionId) throws Exception {
+        User u = current(); //get current user
+        if (!"instructor".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(instructorId)) {
+            throw new ServiceException("Access Denied.");
         }
-
         try {
             var sec = sectionDao.getSection(sectionId);
-            System.out.println("DEBUG CHECK:");
-            System.out.println("section.instructor = " + sec.getInstructor());
-            System.out.println("instructorUser = " + current().getUserId());
-            if (sec == null)
-                throw new ServiceException("Section not found.");
-
-            if (!sec.getInstructor().getUserId().equals(instructorId))
-                throw new ServiceException("Not your section.");
-
-        } catch (SQLException e) {
+            //sections should exist and insturctor should match section
+            if (sec == null) throw new ServiceException("Access Denied.");
+            if (!sec.getInstructor().getUserId().equals(instructorId)) throw new ServiceException("Access Denied.");
+        } catch (Exception e) {
             throw new ServiceException(e.getMessage());
+        }
+    }
+
+    //admin access
+    public void requireAdminAccess() throws ServiceException {
+        if (!"admin".equalsIgnoreCase(current().getRole())) {
+            throw new ServiceException("Access Denied.");
         }
     }
 }

@@ -17,19 +17,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StudentDashboard extends JFrame {
-
     private final Student studentUser;
-
     //apis needed
     private final StudentApi api;
     private final AuthApi authApi;
     private final MaintenanceApi maintenanceApi;
-
-    //
+    //panels
     private JPanel navPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
-
     //functionality cards
     private JPanel catalogCard;
     private JPanel mySectionsCard;
@@ -38,27 +34,21 @@ public class StudentDashboard extends JFrame {
     private JPanel gradesCard;
     private JPanel completedCard;
     private JTable completedTable;
-
     //tables
     private JTable catalogTable;
     private JTable mySectionsTable;
     private JTable finalGradesTable;
     private JTable breakdownTable;
     private JTable availableSectionsTable;
-
     //models for table
     private CatalogTableModel catalogModel;
     private MySectionsTableModel mySectionsModel;
     private FinalGradesTableModel finalGradesModel;
     private BreakdownTableModel breakdownModel;
     private AvailableSectionsTableModel availableSectionsModel;
-
-    //
     private JComboBox<String> courseDropdown;
-
     //IIIT Delhi color for styling
     private final Color teal = new Color(63, 173, 168);
-
     //constructor
     public StudentDashboard(Student studentUser) {
         super("University ERP | Student Dashboard - " + studentUser.getFullname());
@@ -70,7 +60,6 @@ public class StudentDashboard extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
-
         //initialize ui
         initUI();
         //first ui screen is course catalog, so load that
@@ -80,7 +69,6 @@ public class StudentDashboard extends JFrame {
     //ui initialisation
     private void initUI() {
         setLayout(new BorderLayout());
-
         //find if maintenance is on
         boolean maintenanceOn = maintenanceApi.isMaintenanceOn().getData();
 
@@ -96,16 +84,12 @@ public class StudentDashboard extends JFrame {
         JButton b4 = createNavButton("Timetable");
         JButton b5 = createNavButton("Grades");
         JButton b6 = createNavButton("Completed Courses");
-
-
-
         b1.addActionListener(e -> showCard("catalog"));
         b2.addActionListener(e -> showCard("mysections"));
         b3.addActionListener(e -> showCard("register"));
         b4.addActionListener(e -> showCard("timetable"));
         b5.addActionListener(e -> showCard("grades"));
         b6.addActionListener(e -> showCard("completed"));
-
         navPanel.add(b1);
         navPanel.add(b2);
         navPanel.add(b3);
@@ -116,7 +100,6 @@ public class StudentDashboard extends JFrame {
         //card layout for the functionality screens
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
-
         //create the ui for the cards
         initCatalogCard();
         initMySectionsCard();
@@ -144,7 +127,6 @@ public class StudentDashboard extends JFrame {
     private JPanel buildMaintenanceBanner(boolean maintenanceOn) {
         JPanel banner = new JPanel(new BorderLayout());
         banner.setPreferredSize(new Dimension(1200, 40));
-
         if (!maintenanceOn) {
             banner.setVisible(false);
         }
@@ -174,7 +156,6 @@ public class StudentDashboard extends JFrame {
     //topbar with full name, change password, and logout functionality
     private JPanel createTopBar(String fullName) {
         JPanel topBar = new JPanel(new BorderLayout());
-
         topBar.setBackground(teal);
         topBar.setPreferredSize(new Dimension(1200, 80));
 
@@ -182,27 +163,22 @@ public class StudentDashboard extends JFrame {
         JLabel welcome = new JLabel("   Welcome " + fullName);
         welcome.setForeground(Color.WHITE);
         welcome.setFont(new Font("SansSerif", Font.BOLD, 20));
-
         //change password & logout button on right
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 10));
         right.setOpaque(false);
 
         JButton changePass = new JButton("Change Password");
         JButton logout = new JButton("Logout");
-
         styleTopbarButton(changePass);
         styleTopbarButton(logout);
-
         //button click actions
         changePass.addActionListener(e -> openChangePasswordDialog());
         logout.addActionListener(e -> logout());
 
         right.add(changePass);
         right.add(logout);
-
         topBar.add(welcome, BorderLayout.WEST);
         topBar.add(right, BorderLayout.EAST);
-
         return topBar;
     }
 
@@ -227,14 +203,8 @@ public class StudentDashboard extends JFrame {
 
         //show panel & run only if user selects ok
         if (JOptionPane.showConfirmDialog(this, form, "Change Password", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-
             //change password using auth api
-            var res = authApi.changePassword(
-                    studentUser.getUsername(),
-                    new String(oldPass.getPassword()),
-                    new String(newPass.getPassword())
-            );
-
+            var res = authApi.changePassword(studentUser.getUsername(), new String(oldPass.getPassword()), new String(newPass.getPassword()));
             JOptionPane.showMessageDialog(this, res.getMessage());
         }
     }
@@ -243,9 +213,7 @@ public class StudentDashboard extends JFrame {
     private void logout() {
         var res = authApi.logoutUser();
         if (res.isSuccess()){
-            JOptionPane.showMessageDialog(this, res.getMessage());
-            SwingUtilities.invokeLater( () -> new LoginWindow(UiContext.get().auth(), UiContext.get().users()).setVisible(true));
-            dispose();
+            JOptionPane.showMessageDialog(this, res.getMessage());SwingUtilities.invokeLater( () -> new LoginWindow(UiContext.get().auth(), UiContext.get().users()).setVisible(true));dispose();
         }
         else{
             JOptionPane.showMessageDialog(this, res.getMessage());
@@ -261,7 +229,6 @@ public class StudentDashboard extends JFrame {
     private void initCatalogCard() {
         catalogCard = new JPanel(new BorderLayout());
         catalogCard.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
         catalogModel = new CatalogTableModel();
         catalogTable = new JTable(catalogModel);
 
@@ -301,7 +268,7 @@ public class StudentDashboard extends JFrame {
 
     //loads the courses for the table, (into catalog model, which is then added to the table)
     private void loadCatalog() {
-        ApiResult<List<Course>> r = api.catalog();
+        var r = api.catalog();
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
@@ -318,10 +285,8 @@ public class StudentDashboard extends JFrame {
     private void initMySectionsCard() {
         mySectionsCard = new JPanel(new BorderLayout());
         mySectionsCard.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
         mySectionsModel = new MySectionsTableModel();
         mySectionsTable = new JTable(mySectionsModel);
-
         String[] sortOptions = {
                 "Section ID",
                 "Course",
@@ -333,10 +298,10 @@ public class StudentDashboard extends JFrame {
         TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) mySectionsTable.getRowSorter();
         sortBox.addActionListener(e -> {
             int col = switch (sortBox.getSelectedIndex()) {
-                case 0 -> 0;  // Course ID
-                case 1 -> 1;  // Code
-                case 2 -> 2;  // Title
-                case 3 -> 3;  // Credits
+                case 0 -> 0;
+                case 1 -> 1;
+                case 2 -> 2;
+                case 3 -> 3;
                 default -> 0;
             };
 
@@ -346,9 +311,7 @@ public class StudentDashboard extends JFrame {
         JButton refresh = new JButton("Refresh");
         JButton drop = new JButton("Drop Section");
         JButton export = new JButton("Export");
-        export.addActionListener(e -> CSVExporter.exportTable(mySectionsTable,
-                "my_registered_sections"));
-
+        export.addActionListener(e -> CSVExporter.exportTable(mySectionsTable, "my_registered_sections"));
         refresh.addActionListener(e -> loadMySections());
         drop.addActionListener(e -> dropSelectedSection());
 
@@ -379,7 +342,6 @@ public class StudentDashboard extends JFrame {
         if (row < 0) return;
 
         Section s = mySectionsModel.get(row);
-
         ApiResult<String> r = api.drop(studentUser.getUserId(), s.getSectionId());
         JOptionPane.showMessageDialog(this, r.getMessage());
         loadMySections();
@@ -394,7 +356,6 @@ public class StudentDashboard extends JFrame {
 
         courseDropdown = new JComboBox<>();
         JButton loadSections = new JButton("Load Sections");
-
         loadSections.addActionListener(e -> loadAvailableSections());
 
         top.add(new JLabel("Select Course:"));
@@ -431,7 +392,6 @@ public class StudentDashboard extends JFrame {
 
         top.add(new JLabel("Sort by:"));
         top.add(sortBox);
-
         JButton register = new JButton("Register");
         register.addActionListener(e -> registerForSelectedSection());
 
@@ -444,15 +404,12 @@ public class StudentDashboard extends JFrame {
     private void loadAvailableSections() {
         int idx = courseDropdown.getSelectedIndex();
         if (idx < 0) return;
-
         Course c = catalogModel.get(idx);
-
         ApiResult<List<Section>> r = api.getAvailableSections(c.getCourseId());
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
         }
-
         availableSectionsModel.setData(r.getData());
     }
 
@@ -513,10 +470,7 @@ public class StudentDashboard extends JFrame {
         JButton loadFinals = new JButton("Load Final Grades");
         JButton loadBreakdown = new JButton("Load Breakdown");
         JButton exportFinals = new JButton("Export Final Grades");
-        exportFinals.addActionListener(e -> CSVExporter.exportTable(finalGradesTable,
-                "my_final_grades"));
-
-
+        exportFinals.addActionListener(e -> CSVExporter.exportTable(finalGradesTable, "my_final_grades"));
         loadFinals.addActionListener(e -> loadFinalGrades());
         loadBreakdown.addActionListener(e -> loadBreakdown());
 
@@ -552,19 +506,14 @@ public class StudentDashboard extends JFrame {
     private void initCompletedCard() {
         completedCard = new JPanel(new BorderLayout());
         completedCard.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-
         completedTable = new JTable();
         completedCard.add(new JScrollPane(completedTable), BorderLayout.CENTER);
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton load = new JButton("Get Finished Courses");
         JButton export = new JButton("Export");
-        export.addActionListener(e -> CSVExporter.exportTable(completedTable,
-                "my_finished_courses"));
-
-
+        export.addActionListener(e -> CSVExporter.exportTable(completedTable, "my_finished_courses"));
         load.addActionListener(e -> loadCompletedCourses());
-
         top.add(load);
         top.add(export);
 
@@ -572,7 +521,7 @@ public class StudentDashboard extends JFrame {
         contentPanel.add(completedCard, "completed");
     }
 
-    //
+    //completed courses
     private void loadCompletedCourses() {
         var r = api.getCompletedSections(studentUser.getUserId());
         if (!r.isSuccess()) {
@@ -582,7 +531,6 @@ public class StudentDashboard extends JFrame {
 
         completedTable.setModel(new SectionListModel(r.getData()));
     }
-
 
     //models for tables
     private static class CatalogTableModel extends AbstractTableModel {
@@ -748,8 +696,6 @@ public class StudentDashboard extends JFrame {
         };
 
         private List<Section> data = new ArrayList<>();
-
-        public SectionListModel() {}
 
         public SectionListModel(List<Section> list) {
             setData(list);

@@ -29,12 +29,10 @@ public class InstructorDashboard extends JFrame {
     private final MaintenanceApi maintenanceApi;
     private final AuthApi authApi;
     private final GradeSlabApi  slabApi;
-
     //Main structure
     private JPanel navPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
-
     //cards for card layout
     private JPanel sectionsCard;
     private JPanel assessmentsCard;
@@ -42,32 +40,26 @@ public class InstructorDashboard extends JFrame {
     private JPanel finalsCard;
     private JPanel statsCard;
     private JPanel slabsCard;
-
     private JPanel statsContent;
-
     //the selected section determines output of assessments, grades etc.
     private List<Section> mySections = new ArrayList<>();
     private JComboBox<String> sectionDropdown;
     private Section selectedSection;
-
     //Tables
     private JTable assessmentsTable;
     private JTable gradebookTable;
     private JTable finalPreviewTable;
     private JTable slabTable;
-
     //Models for table
     private AssessmentTableModel assessmentModel;
     private GradebookTableModel gradebookModel;
     private FinalPreviewTableModel finalPreviewModel;
     private SlabModel slabModel;
-
     //IIIT Delhi color for styling
     private final Color teal = new Color(63, 173, 168);
-
     //constructor
     public InstructorDashboard(Instructor instructorUser) {
-        super("Instructor Dashboard - " + instructorUser.getUsername());
+        super("University ERP | Instructor Dashboard - " + instructorUser.getUsername());
         this.instructorUser = instructorUser;
         this.api = new InstructorApi(UiContext.get().instructors());
         this.authApi = new AuthApi(UiContext.get().auth());
@@ -77,7 +69,6 @@ public class InstructorDashboard extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
-
         initUI();
         loadSections();
     }
@@ -85,7 +76,6 @@ public class InstructorDashboard extends JFrame {
     //ui initialisation
     private void initUI() {
         setLayout(new BorderLayout());
-
         //find if maintenance is on
         boolean maintenanceOn = maintenanceApi.isMaintenanceOn().getData();
 
@@ -95,21 +85,18 @@ public class InstructorDashboard extends JFrame {
         navPanel.setPreferredSize(new Dimension(220, 800));
         navPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
         navPanel.setBackground(teal);
-
         JButton sectionsBtn = createNavButton("My Sections");
         JButton assessBtn = createNavButton("Assessments");
         JButton gradebookBtn = createNavButton("Gradebook");
         JButton finalsBtn = createNavButton("Final Grades");
         JButton statsBtn = createNavButton("Section Stats");
         JButton slabsBtn = createNavButton("Grading Slabs");
-
         slabsBtn.addActionListener(e -> showCard("slabs"));
         sectionsBtn.addActionListener(e -> showCard("sections"));
         assessBtn.addActionListener(e -> showCard("assessments"));
         gradebookBtn.addActionListener(e -> showCard("gradebook"));
         finalsBtn.addActionListener(e -> showCard("finals"));
         statsBtn.addActionListener(e -> showCard("stats"));
-
         navPanel.add(sectionsBtn);
         navPanel.add(assessBtn);
         navPanel.add(gradebookBtn);
@@ -117,12 +104,9 @@ public class InstructorDashboard extends JFrame {
         navPanel.add(statsBtn);
         navPanel.add(slabsBtn);
 
-        add(navPanel, BorderLayout.WEST);
-
         //cards layout to switch screens for functionality
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
-
         //build cards
         initSectionsCard();
         initAssessmentsCard();
@@ -266,40 +250,34 @@ public class InstructorDashboard extends JFrame {
     private void initSectionsCard() {
         sectionsCard = new JPanel(new BorderLayout());
         sectionsCard.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
         JLabel lbl = new JLabel("My Sections");
         lbl.setFont(new Font("SansSerif", Font.BOLD, 22));
-
         sectionDropdown = new JComboBox<>();
 
         JPanel top = new JPanel(new BorderLayout());
         top.add(lbl, BorderLayout.WEST);
         top.add(sectionDropdown, BorderLayout.EAST);
 
-        sectionsCard.add(top, BorderLayout.NORTH);
-
         JTextArea details = new JTextArea();
         details.setEditable(false);
         details.setFont(new Font("Monospaced", Font.PLAIN, 15));
-
-        sectionsCard.add(new JScrollPane(details), BorderLayout.CENTER);
-
         JButton refresh = new JButton("Refresh");
         refresh.addActionListener(e -> loadSections());
-        sectionsCard.add(refresh, BorderLayout.SOUTH);
 
         sectionDropdown.addActionListener(e -> showSectionDetails(details));
+
+        sectionsCard.add(top, BorderLayout.NORTH);
+        sectionsCard.add(refresh, BorderLayout.SOUTH);
+        sectionsCard.add(new JScrollPane(details), BorderLayout.CENTER);
     }
 
     //display section details
     private void showSectionDetails(JTextArea details) {
         int idx = sectionDropdown.getSelectedIndex();
         if (idx < 0 || idx >= mySections.size()) return;
-
         selectedSection = mySections.get(idx);
 
-        details.setText(
-                "Section ID: " + selectedSection.getSectionId() + "\n" +
+        details.setText("Section ID: " + selectedSection.getSectionId() + "\n" +
                         "Course Code: " + selectedSection.getCourse().getCode() + "\n" +
                         "Course Title: " + selectedSection.getCourse().getTitle() + "\n" +
                         "Instructor: " + selectedSection.getInstructor().getFullname() + "\n" +
@@ -307,8 +285,7 @@ public class InstructorDashboard extends JFrame {
                         "Room: " + selectedSection.getRoom() + "\n" +
                         "Capacity: " + selectedSection.getCapacity() + "\n" +
                         "Semester: " + selectedSection.getSemester() + "\n" +
-                        "Year: " + selectedSection.getYear()
-        );
+                        "Year: " + selectedSection.getYear());
         details.setFont(new Font("SansSerif", Font.BOLD, 15));
     }
 
@@ -322,7 +299,6 @@ public class InstructorDashboard extends JFrame {
 
         mySections = r.getData();
         sectionDropdown.removeAllItems();
-
         for (Section s : mySections) {
             sectionDropdown.addItem(
                     "Section " + s.getSectionId() + " - " + s.getDayTime()
@@ -330,7 +306,7 @@ public class InstructorDashboard extends JFrame {
         }
 
         if (!mySections.isEmpty()) {
-            selectedSection = mySections.get(0);
+            selectedSection = mySections.getFirst();
         }
     }
 
@@ -347,12 +323,10 @@ public class InstructorDashboard extends JFrame {
         JButton editBtn = new JButton("Edit");
         JButton deleteBtn = new JButton("Delete");
         JButton loadBtn = new JButton("Load");
-
         btnBar.add(loadBtn);
         btnBar.add(addBtn);
         btnBar.add(editBtn);
         btnBar.add(deleteBtn);
-
         loadBtn.addActionListener(e -> refreshAssessments());
         addBtn.addActionListener(e -> openAddAssessmentDialog());
         editBtn.addActionListener(e -> openEditAssessmentDialog());
@@ -379,30 +353,22 @@ public class InstructorDashboard extends JFrame {
     //create new assessment
     private void openAddAssessmentDialog() {
         if (selectedSection == null) return;
-
         JTextField name = new JTextField();
         JTextField maxMarks = new JTextField();
         JTextField weight = new JTextField();
-
         Object[] form = {
                 "Name:", name,
                 "Max Marks:", maxMarks,
                 "Weight (%):", weight
         };
 
-        int opt = JOptionPane.showConfirmDialog(this, form, "Add Assessment",
-                JOptionPane.OK_CANCEL_OPTION);
+        int opt = JOptionPane.showConfirmDialog(this, form, "Add Assessment", JOptionPane.OK_CANCEL_OPTION);
 
         if (opt == JOptionPane.OK_OPTION) {
             try {
-                Assessment a = new Assessment(
-                        0,
-                        selectedSection.getSectionId(),
-                        name.getText(),
-                        Double.parseDouble(maxMarks.getText()),
-                        Double.parseDouble(weight.getText())
-                );
-                api.addAssessment(a, instructorUser.getUserId());
+                Assessment a = new Assessment(0, selectedSection.getSectionId(), name.getText(), Double.parseDouble(maxMarks.getText()), Double.parseDouble(weight.getText()));
+                var r = api.addAssessment(a, instructorUser.getUserId());
+                JOptionPane.showMessageDialog(this, r.getMessage());
                 refreshAssessments();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage());
@@ -417,34 +383,23 @@ public class InstructorDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "Select an assessment!");
             return;
         }
-
         Assessment a = assessmentModel.get(row);
 
         JTextField name = new JTextField(a.getName());
         JTextField maxMarks = new JTextField(String.valueOf(a.getMaxMarks()));
         JTextField weight = new JTextField(String.valueOf(a.getWeight()));
-
         Object[] form = {
                 "Name:", name,
                 "Max Marks:", maxMarks,
                 "Weight (%):", weight
         };
 
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Edit Assessment", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, form, "Edit Assessment", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 
             try {
-                Assessment updated = new Assessment(
-                        a.getId(),
-                        a.getSectionId(),
-                        name.getText(),
-                        Double.parseDouble(maxMarks.getText()),
-                        Double.parseDouble(weight.getText())
-                );
-
-                api.updateAssessment(updated, instructorUser.getUserId());
+                Assessment updated = new Assessment(a.getId(), a.getSectionId(), name.getText(), Double.parseDouble(maxMarks.getText()), Double.parseDouble(weight.getText()));
+                var r = api.updateAssessment(updated, instructorUser.getUserId());
                 refreshAssessments();
-
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage());
             }
@@ -455,13 +410,9 @@ public class InstructorDashboard extends JFrame {
     private void deleteSelectedAssessment() {
         int row = assessmentsTable.getSelectedRow();
         if (row < 0) return;
-
         Assessment a = assessmentModel.get(row);
 
-        if (JOptionPane.showConfirmDialog(this,
-                "Delete assessment?", "Confirm",
-                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-
+        if (JOptionPane.showConfirmDialog(this, "Delete assessment?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             api.deleteAssessment(a, instructorUser.getUserId());
             refreshAssessments();
         }
@@ -471,7 +422,6 @@ public class InstructorDashboard extends JFrame {
     private void initGradebookCard() {
         gradebookCard = new JPanel(new BorderLayout());
         gradebookCard.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
         gradebookModel = new GradebookTableModel();
         gradebookTable = new JTable(gradebookModel);
 
@@ -518,9 +468,7 @@ public class InstructorDashboard extends JFrame {
     //load grades for section
     private void loadGradebook() {
         if (selectedSection == null) return;
-
-        ApiResult<InstructorService.SectionGradeSummary> r =
-                api.getGradebook(selectedSection.getSectionId(), instructorUser.getUserId());
+        var r = api.getGradebook(selectedSection.getSectionId(), instructorUser.getUserId());
 
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
@@ -533,8 +481,7 @@ public class InstructorDashboard extends JFrame {
     //save edited scores
     private void saveScoresFromGrid() {
         List<Score> list = gradebookModel.extractScores();
-
-        ApiResult<String> r = api.saveScores(list, instructorUser.getUserId(), selectedSection.getSectionId());
+        var r = api.saveScores(list, instructorUser.getUserId(), selectedSection.getSectionId());
         JOptionPane.showMessageDialog(this, r.getMessage());
     }
 
@@ -542,17 +489,15 @@ public class InstructorDashboard extends JFrame {
     private void initFinalGradesCard() {
         finalsCard = new JPanel(new BorderLayout());
         finalsCard.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
         finalPreviewModel = new FinalPreviewTableModel();
         finalPreviewTable = new JTable(finalPreviewModel);
 
         //sorting
         String[] sortOptions = {
-                "Section ID",
-                "Instructor",
-                "Time",
-                "Room",
-                "Capacity"
+                "Student",
+                "Roll No",
+                "Final %",
+                "Grade",
         };
         JComboBox<String> sortBox = new JComboBox<>(sortOptions);
         finalPreviewTable.setAutoCreateRowSorter(true);
@@ -563,19 +508,15 @@ public class InstructorDashboard extends JFrame {
                 case 1 -> 1;
                 case 2 -> 2;
                 case 3 -> 3;
-                case 4 -> 4;
                 default -> 0;
             };
-
             sorter.setSortKeys(List.of(new RowSorter.SortKey(col, SortOrder.ASCENDING)));
         });
 
         JButton preview = new JButton("Preview Finals");
         JButton finalizeBtn = new JButton("Finalize Grades");
         JButton exportFinals = new JButton("Export Final Grades");
-        exportFinals.addActionListener(e -> CSVExporter.exportTable(finalPreviewTable,
-                "my_final_grades"));
-
+        exportFinals.addActionListener(e -> CSVExporter.exportTable(finalPreviewTable, "my_final_grades"));
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(new JLabel("Sort by:"));
         top.add(sortBox);
@@ -585,7 +526,6 @@ public class InstructorDashboard extends JFrame {
 
         preview.addActionListener(e -> previewFinals());
         finalizeBtn.addActionListener(e -> finalizeGrades());
-
         finalsCard.add(top, BorderLayout.NORTH);
         finalsCard.add(new JScrollPane(finalPreviewTable), BorderLayout.CENTER);
     }
@@ -593,9 +533,7 @@ public class InstructorDashboard extends JFrame {
     //see the to be grades
     private void previewFinals() {
         if (selectedSection == null) return;
-
-        ApiResult<List<FinalGrade>> r =
-                api.previewFinalGrades(selectedSection.getSectionId(), instructorUser.getUserId());
+        ApiResult<List<FinalGrade>> r = api.previewFinalGrades(selectedSection.getSectionId(), instructorUser.getUserId());
 
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
@@ -608,10 +546,7 @@ public class InstructorDashboard extends JFrame {
     //save final grades
     private void finalizeGrades() {
         if (selectedSection == null) return;
-
-        ApiResult<String> r =
-                api.finalizeGrades(selectedSection.getSectionId(), instructorUser.getUserId());
-
+        var r = api.finalizeGrades(selectedSection.getSectionId(), instructorUser.getUserId());
         JOptionPane.showMessageDialog(this, r.getMessage());
     }
 
@@ -624,46 +559,32 @@ public class InstructorDashboard extends JFrame {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton loadBtn = new JButton("Load Statistics");
         top.add(loadBtn);
-
         loadBtn.addActionListener(e -> loadStatisticsForSelected());
-
         statsCard.add(top, BorderLayout.NORTH);
 
         //stats
         statsContent = new JPanel(new BorderLayout());
-        statsContent.add(new JLabel(
-                "Click 'Load Statistics' to view charts.",
-                SwingConstants.CENTER
-        ), BorderLayout.CENTER);
-
+        statsContent.add(new JLabel("Click 'Load Statistics' to view charts.", SwingConstants.CENTER), BorderLayout.CENTER);
         statsCard.add(statsContent, BorderLayout.CENTER);
     }
 
     //all stats
     private void loadStatisticsForSelected() {
         if (selectedSection == null) return;
-
         //grades for section
         ApiResult<InstructorService.SectionGradeSummary> r = api.getGradebook(selectedSection.getSectionId(), instructorUser.getUserId());
-
         if (!r.isSuccess()) {
             statsCard.add(new JLabel("Unable to load statistics."), BorderLayout.CENTER);
             return;
         }
 
-        InstructorService.SectionGradeSummary summary = r.getData();
-
+        var summary = r.getData();
         //get all final grades
-        List<FinalGrade> finals = summary.getRows().stream()
-                .map(InstructorService.StudentGradeRow::getFinalGrade)
-                .filter(f -> f != null)
-                .toList();
-
+        List<FinalGrade> finals = summary.getRows().stream().map(InstructorService.StudentGradeRow::getFinalGrade).filter(f -> f != null).toList();
         //stats
         double mean = finals.stream().mapToDouble(FinalGrade::getPercentage).average().orElse(0);
         double min = finals.stream().mapToDouble(FinalGrade::getPercentage).min().orElse(0);
         double max = finals.stream().mapToDouble(FinalGrade::getPercentage).max().orElse(0);
-
         double median = 0;
         if (!finals.isEmpty()) {
             List<Double> sorted = finals.stream()
@@ -676,11 +597,7 @@ public class InstructorDashboard extends JFrame {
                     : sorted.get(mid);
         }
 
-        double sd = Math.sqrt(finals.stream()
-                .mapToDouble(f -> Math.pow(f.getPercentage() - mean, 2))
-                .average()
-                .orElse(0));
-
+        double sd = Math.sqrt(finals.stream().mapToDouble(f -> Math.pow(f.getPercentage() - mean, 2)).average().orElse(0));
         //summary panel
         JPanel statsPanel = new JPanel(new GridLayout(5, 1));
         statsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -690,46 +607,25 @@ public class InstructorDashboard extends JFrame {
         statsPanel.add(new JLabel("Max: " + max));
         statsPanel.add(new JLabel("Std Dev: " + sd));
 
-        //
         DefaultCategoryDataset gradeDataset = new DefaultCategoryDataset();
         Map<String, Integer> gradeCount = new HashMap<>();
-
         for (FinalGrade f : finals) {
             gradeCount.merge(f.getLetter(), 1, Integer::sum);
         }
-
         for (var entry : gradeCount.entrySet()) {
             gradeDataset.addValue(entry.getValue(), "Count", entry.getKey());
         }
 
-        JFreeChart gradeChart = ChartFactory.createBarChart(
-                "Grade Distribution",
-                "Grade",
-                "Count",
-                gradeDataset
-        );
-
+        JFreeChart gradeChart = ChartFactory.createBarChart("Grade Distribution", "Grade", "Count", gradeDataset);
         //avg scores
         DefaultCategoryDataset assessmentDataset = new DefaultCategoryDataset();
-
         for (Assessment a : summary.getAssessments()) {
-            double avg = summary.getRows().stream()
-                    .flatMap(row -> row.getScores().stream())
-                    .filter(s -> s.getAssessmentId() == a.getId())
-                    .mapToDouble(Score::getMarksObtained)
-                    .average()
-                    .orElse(0);
-
+            double avg = summary.getRows().stream().flatMap(row -> row.getScores().stream()).filter(s -> s.getAssessmentId() == a.getId()).mapToDouble(Score::getMarksObtained).average().orElse(0);
             double pct = a.getMaxMarks() > 0 ? (avg / a.getMaxMarks()) * 100 : 0;
             assessmentDataset.addValue(pct, "Percentage", a.getName());
         }
 
-        JFreeChart avgChart = ChartFactory.createBarChart(
-                "Assessment Averages (%)",
-                "Assessment",
-                "Avg %",
-                assessmentDataset
-        );
+        JFreeChart avgChart = ChartFactory.createBarChart("Assessment Averages (%)", "Assessment", "Avg %", assessmentDataset);
 
         //graphs
         JPanel chartsPanel = new JPanel(new GridLayout(1, 2));
@@ -744,22 +640,19 @@ public class InstructorDashboard extends JFrame {
         );
         split.setDividerLocation(700); // adjust as needed
 
-        //replace center content
+        //replace content in card
         statsCard.remove(statsContent);
         statsContent.removeAll();
         statsContent.add(split);
         statsCard.add(statsContent, BorderLayout.CENTER);
-
         statsCard.revalidate();
         statsCard.repaint();
-
     }
 
     //slabs edit
     private void initSlabsCard() {
         slabsCard = new JPanel(new BorderLayout());
         slabsCard.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
-
         slabTable = new JTable(slabModel = new SlabModel());
         slabsCard.add(new JScrollPane(slabTable), BorderLayout.CENTER);
 
@@ -768,12 +661,10 @@ public class InstructorDashboard extends JFrame {
         JButton edit = new JButton("Edit");
         JButton delete = new JButton("Delete");
         JButton load = new JButton("Load");
-
         buttons.add(load);
         buttons.add(add);
         buttons.add(edit);
         buttons.add(delete);
-
         load.addActionListener(e -> loadSlabs());
         add.addActionListener(e -> openAddSlabDialog());
         edit.addActionListener(e -> openEditSlabDialog());
@@ -784,7 +675,7 @@ public class InstructorDashboard extends JFrame {
 
     //load slabs for section
     private void loadSlabs() {
-        ApiResult<List<GradeSlab>> r = slabApi.list(selectedSection.getSectionId(), instructorUser.getUserId());
+        var r = slabApi.list(selectedSection.getSectionId(), instructorUser.getUserId());
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
@@ -797,7 +688,6 @@ public class InstructorDashboard extends JFrame {
         JTextField letter = new JTextField();
         JTextField min = new JTextField();
         JTextField max = new JTextField();
-
         Object[] form = {
                 "Letter Grade:", letter,
                 "Min %:", min,
@@ -810,10 +700,8 @@ public class InstructorDashboard extends JFrame {
                 String L = letter.getText().trim();
                 double lo = Double.parseDouble(min.getText().trim());
                 double hi = Double.parseDouble(max.getText().trim());
-
                 validateSlab(L, lo, hi);
-
-                ApiResult<String> r = slabApi.add(selectedSection.getSectionId(), L, lo, hi, instructorUser.getUserId());
+                var r = slabApi.add(selectedSection.getSectionId(), L, lo, hi, instructorUser.getUserId());
 
                 JOptionPane.showMessageDialog(this, r.getMessage());
                 loadSlabs();
@@ -854,7 +742,6 @@ public class InstructorDashboard extends JFrame {
                 double hi = Double.parseDouble(max.getText().trim());
 
                 validateSlab(L, lo, hi);
-
                 GradeSlab updated = new GradeSlab(g.getId(),selectedSection.getSectionId(), L, lo, hi);
                 ApiResult<String> r = slabApi.update(updated, selectedSection.getSectionId(), instructorUser.getUserId());
 
@@ -877,7 +764,6 @@ public class InstructorDashboard extends JFrame {
 
         int row = slabTable.convertRowIndexToModel(view);
         GradeSlab g = slabModel.get(row);
-
         if (JOptionPane.showConfirmDialog(this,
                 "Delete slab \"" + g.getLetter() + "\"?",
                 "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -889,23 +775,17 @@ public class InstructorDashboard extends JFrame {
     }
 
     //validate slabs
-    private void validateSlab(String letter, double min, double max) {
+    private void validateSlab(String letter, double min, double max) throws IllegalArgumentException {
         if (letter.isEmpty())
             throw new IllegalArgumentException("Letter cannot be empty");
-
-        if (min < 0 || max > 100)
-            throw new IllegalArgumentException("Percentage must be within 0–100");
-
         if (min >= max)
             throw new IllegalArgumentException("Min must be less than Max");
     }
 
     //models for table
     private static class AssessmentTableModel extends AbstractTableModel {
-
         private final String[] cols = {"ID", "Name", "Max", "Weight"};
         private List<Assessment> data = new ArrayList<>();
-
         public void setData(List<Assessment> list) {
             data = list;
             fireTableDataChanged();
@@ -939,7 +819,6 @@ public class InstructorDashboard extends JFrame {
         public void setData(InstructorService.SectionGradeSummary summary) {
             this.assessments = summary.getAssessments();
             this.rows = summary.getRows();
-
             colNames = new String[assessments.size() + 3];
             colNames[0] = "Roll No";
             colNames[1] = "Name";
@@ -960,20 +839,13 @@ public class InstructorDashboard extends JFrame {
         @Override
         public Object getValueAt(int r, int c) {
             InstructorService.StudentGradeRow row = rows.get(r);
-
             if (c == 0) return row.getStudent().getRollNo();
             if (c == 1) return row.getStudent().getFullname();
 
             int assessIndex = c - 2;
-
             if (assessIndex >= 0 && assessIndex < assessments.size()) {
                 Assessment a = assessments.get(assessIndex);
-
-                Score score = row.getScores().stream()
-                        .filter(s -> s.getAssessmentId() == a.getId())
-                        .findFirst()
-                        .orElse(null);
-
+                Score score = row.getScores().stream().filter(s -> s.getAssessmentId() == a.getId()).findFirst().orElse(null);
                 return score == null ? "" : score.getMarksObtained();
             }
 
@@ -991,19 +863,16 @@ public class InstructorDashboard extends JFrame {
             try {
                 double d = Double.parseDouble(val.toString());
                 InstructorService.StudentGradeRow row = rows.get(r);
-
                 Assessment a = assessments.get(c - 2);
-
                 Score updated = new Score(a.getId(), row.getStudent().getUserId(), d);
 
-                // Replace or add score
+                //replace or add score
                 List<Score> newScores = new ArrayList<>(row.getScores());
                 newScores.removeIf(s -> s.getAssessmentId() == a.getId());
                 newScores.add(updated);
 
                 row.getScores().clear();
                 row.getScores().addAll(newScores);
-
                 fireTableCellUpdated(r, c);
             } catch (Exception ignored) {}
         }
@@ -1018,7 +887,6 @@ public class InstructorDashboard extends JFrame {
     }
 
     private static class FinalPreviewTableModel extends AbstractTableModel {
-
         private List<FinalGrade> data = new ArrayList<>();
 
         @Override
@@ -1082,5 +950,4 @@ public class InstructorDashboard extends JFrame {
             };
         }
     }
-
 }

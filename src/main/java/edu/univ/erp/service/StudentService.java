@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StudentService {
-
     private final CourseDao courseDao;
     private final SectionDao sectionDao;
     private final EnrollmentDao enrollmentDao;
@@ -20,10 +19,8 @@ public class StudentService {
     private final ScoreDao scoreDao;
     private final FinalGradeDao finalGradeDao;
     private final MaintenanceService maintenanceService;
-
     //constructor
     public StudentService(DataSource ds, AccessManager a) {
-
         this.courseDao = new CourseDao(ds);
         this.sectionDao = new SectionDao(ds);
         this.enrollmentDao = new EnrollmentDao(ds);
@@ -36,6 +33,25 @@ public class StudentService {
     //course catalog
     public List<Course> getCatalog() throws SQLException {
         return courseDao.findAllCourses();
+    }
+
+    //enrolled sections
+    public List<Section> getMySections(String studentId) throws Exception {
+        //access management
+        UiContext.get().access().requireStudentAccess(studentId);
+        return sectionDao.getSectionsForStudent(studentId);
+    }
+
+    //finished courses
+    public List<Section> getCompletedSections(String studentId) throws SQLException {
+        return enrollmentDao.getCompletedSections(studentId);
+    }
+
+    //student timetable
+    public List<Section> getTimetable(String studentId) throws Exception {
+        //access management
+        UiContext.get().access().requireStudentAccess(studentId);
+        return sectionDao.getSectionsForStudent(studentId);
     }
 
     //sections for registration
@@ -88,25 +104,6 @@ public class StudentService {
 
         //drop course
         enrollmentDao.drop(studentId, sectionId);
-    }
-
-    //enrolled sections
-    public List<Section> getMySections(String studentId) throws Exception {
-        //access management
-        UiContext.get().access().requireStudentAccess(studentId);
-        return sectionDao.getSectionsForStudent(studentId);
-    }
-
-    //student timetable
-    public List<Section> getTimetable(String studentId) throws Exception {
-        //access management
-        UiContext.get().access().requireStudentAccess(studentId);
-        return sectionDao.getSectionsForStudent(studentId);
-    }
-
-    //finished courses
-    public List<Section> getCompletedSections(String studentId) throws SQLException {
-        return enrollmentDao.getCompletedSections(studentId);
     }
 
     //component wise grades

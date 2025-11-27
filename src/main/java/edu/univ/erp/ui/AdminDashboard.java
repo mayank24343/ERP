@@ -21,46 +21,36 @@ public class AdminDashboard extends JFrame {
     private final AdminApi api;
     private final AuthApi authApi;
     private final MaintenanceApi maintenanceApi;
-
     //layout
     private JPanel navPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
     private JPanel maintenanceBanner;
-
     //cards
     private JPanel homeCard;
     private JPanel usersCard;
     private JPanel coursesCard;
     private JPanel sectionsCard;
-    private JPanel assignCard;
-    private JPanel maintenanceCard;
-
     //IIIT Delhi colour
     private final Color teal = new Color(63, 173, 168);
-
     //constructor
     public AdminDashboard(Admin adminUser) {
-        super("Admin Dashboard - " + adminUser.getFullname());
+        super("University ERP | Admin Dashboard - " + adminUser.getFullname());
         this.adminUser = adminUser;
         this.api = new AdminApi(UiContext.get().admin(), UiContext.get().users());
         this.authApi = new AuthApi(UiContext.get().auth());
         this.maintenanceApi = new MaintenanceApi();
-
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
-
         initUI();
     }
 
     //initialise UI
     private void initUI() {
         setLayout(new BorderLayout());
-
         //find if maintenance is on
         boolean maintenanceOn = maintenanceApi.isMaintenanceOn().getData();
-
         //left side navbar
         navPanel = new JPanel(new GridLayout(10,1,0,5));
         navPanel.setPreferredSize(new Dimension(220,800));
@@ -73,8 +63,6 @@ public class AdminDashboard extends JFrame {
         JButton bAssign = createNavButton("Assign Instructor");
         JButton bMaintenance = createNavButton("Maintenance Mode");
         JButton btnAddDrop = createNavButton("Set Add/Drop Deadline");
-
-
         bUsers.addActionListener(e -> showCard("users"));
         bCourses.addActionListener(e -> showCard("courses"));
         bSections.addActionListener(e -> showCard("sections"));
@@ -242,7 +230,6 @@ public class AdminDashboard extends JFrame {
         top.add(add);
 
         usersCard.add(top, BorderLayout.NORTH);
-        usersCard.add(new JLabel("User management tools via dialogs."), BorderLayout.CENTER);
     }
 
     //add and edit courses
@@ -264,7 +251,6 @@ public class AdminDashboard extends JFrame {
         top.add(delete);
 
         coursesCard.add(top, BorderLayout.NORTH);
-        coursesCard.add(new JLabel("Manage courses using the controls above."), BorderLayout.CENTER);
     }
 
     //add and edit sections
@@ -286,7 +272,6 @@ public class AdminDashboard extends JFrame {
         top.add(delete);
 
         sectionsCard.add(top, BorderLayout.NORTH);
-        sectionsCard.add(new JLabel("Manage sections using the controls above."), BorderLayout.CENTER);
     }
 
     //add user panel
@@ -295,7 +280,6 @@ public class AdminDashboard extends JFrame {
         JTextField username = new JTextField();
         JTextField password = new JTextField();
         JComboBox<String> role = new JComboBox<>(new String[]{"student", "instructor", "admin"});
-
         JTextField roll = new JTextField();
         JTextField program = new JTextField();
         JTextField year = new JTextField();
@@ -338,22 +322,9 @@ public class AdminDashboard extends JFrame {
             }
         });
 
-        int result = JOptionPane.showConfirmDialog(this, form,
-                "Add New User", JOptionPane.OK_CANCEL_OPTION);
-
+        int result = JOptionPane.showConfirmDialog(this, form, "Add New User", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
-            var res = api.addUser(
-                    fullName.getText(),
-                    username.getText(),
-                    password.getText(),
-                    role.getSelectedItem().toString(),
-                    roll.getText(),
-                    program.getText(),
-                    year.getText().isBlank() ? null : Integer.parseInt(year.getText()),
-                    dept.getText(),
-                    desig.getText()
-            );
-
+            var res = api.addUser(fullName.getText(), username.getText(), password.getText(), role.getSelectedItem().toString(), roll.getText(), program.getText(), year.getText().isBlank() ? null : Integer.parseInt(year.getText()), dept.getText(), desig.getText());
             JOptionPane.showMessageDialog(this, res.getMessage());
         }
     }
@@ -363,44 +334,32 @@ public class AdminDashboard extends JFrame {
         JTextField code = new JTextField();
         JTextField title = new JTextField();
         JComboBox<Integer> credits = new JComboBox<>(new Integer[]{1, 2, 4});
-
         Object[] form = {
                 "Course Code:", code,
                 "Title:", title,
                 "Credits:", credits
         };
 
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Add Course", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-
-            var r = api.addCourse(
-                    code.getText(),
-                    title.getText(),
-                    (Integer) credits.getSelectedItem()
-            );
-
+        if (JOptionPane.showConfirmDialog(this, form, "Add Course", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            var r = api.addCourse(code.getText(), title.getText(), (Integer) credits.getSelectedItem());
             JOptionPane.showMessageDialog(this, r.getMessage());
         }
     }
 
     //edit course
     private void openEditCourseDialog() {
-
         //course list
         List<Course> courses;
         var res = api.listCourses();
-
         if (!res.isSuccess()) {
             JOptionPane.showMessageDialog(this, res.getMessage());
             return;
         }
-
         courses = res.getData();
 
         //course codes
         JComboBox<String> courseDropdown = new JComboBox<>();
         Map<String, Course> courseMap = new HashMap<>();
-
         for (Course c : courses) {
             String label = c.getCode() + " - " + c.getTitle();
             courseDropdown.addItem(label);
@@ -415,18 +374,16 @@ public class AdminDashboard extends JFrame {
         courseDropdown.addActionListener(e -> {
             String selected = (String) courseDropdown.getSelectedItem();
             Course c = courseMap.get(selected);
-
             if (c != null) {
                 titleField.setText(c.getTitle());
                 creditsField.setSelectedItem(c.getCredits());
             }
         });
 
-        //
+        //if item selected fill in form
         if (courseDropdown.getItemCount() > 0) {
             courseDropdown.setSelectedIndex(0);
-            courseDropdown.getActionListeners()[0]
-                    .actionPerformed(null); // trigger field fill
+            courseDropdown.getActionListeners()[0].actionPerformed(null); //trigger field fill
         }
 
         Object[] form = {
@@ -435,34 +392,25 @@ public class AdminDashboard extends JFrame {
                 "Credits:", creditsField
         };
 
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Edit Course", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-
+        if (JOptionPane.showConfirmDialog(this, form, "Edit Course", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             // find selected course
             String selected = (String) courseDropdown.getSelectedItem();
             Course original = courseMap.get(selected);
 
             //perform update
-            var updateRes = api.updateCourse(
-                    original.getCode(),           // code unchanged
-                    titleField.getText(),
-                    (Integer) creditsField.getSelectedItem()
-            );
-
+            var updateRes = api.updateCourse(original.getCode(), titleField.getText(), (Integer) creditsField.getSelectedItem());
             JOptionPane.showMessageDialog(this, updateRes.getMessage());
         }
     }
 
     //remove course
     private void openDeleteCourseDialog() {
-
         //fetch course list
         var res = api.listCourses();
         if (!res.isSuccess()) {
             JOptionPane.showMessageDialog(this, res.getMessage());
             return;
         }
-
         List<Course> courses = res.getData();
         if (courses.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No courses available to delete.");
@@ -472,30 +420,19 @@ public class AdminDashboard extends JFrame {
         //course dropdown
         JComboBox<String> courseDropdown = new JComboBox<>();
         Map<String, Course> courseMap = new HashMap<>();
-
         for (Course c : courses) {
             String label = c.getCode() + " - " + c.getTitle();
             courseDropdown.addItem(label);
             courseMap.put(label, c);
         }
 
-        Object[] form = {
-                "Select Course to delete:", courseDropdown
-        };
+        Object[] form = {"Select Course to delete:", courseDropdown};
 
-        // 3. Confirm delete
-        int choice = JOptionPane.showConfirmDialog(
-                this,
-                form,
-                "Delete Course",
-                JOptionPane.OK_CANCEL_OPTION
-        );
-
+        //confirmation for delete
+        int choice = JOptionPane.showConfirmDialog(this, form, "Delete Course", JOptionPane.OK_CANCEL_OPTION);
         if (choice == JOptionPane.OK_OPTION) {
-
             String selectedLabel = (String) courseDropdown.getSelectedItem();
             Course selectedCourse = courseMap.get(selectedLabel);
-
             //delete
             var deleteRes = api.deleteCourse(selectedCourse.getCourseId());
             JOptionPane.showMessageDialog(this, deleteRes.getMessage());
@@ -504,12 +441,10 @@ public class AdminDashboard extends JFrame {
 
     //add section
     private void openAddSectionDialog() {
-
         //get courses
         List<Course> courses = api.listCourses().getData();
         JComboBox<String> courseDropdown = new JComboBox<>();
         Map<String, Integer> courseMap = new HashMap<>();
-
         for (Course c : courses) {
             String label = c.getCode() + " - " + c.getTitle();
             courseDropdown.addItem(label);
@@ -520,7 +455,6 @@ public class AdminDashboard extends JFrame {
         List<Instructor> instructors = api.listInstructors().getData();
         JComboBox<String> instructorDropdown = new JComboBox<>();
         Map<String, String> instructorMap = new HashMap<>();
-
         for (Instructor i : instructors) {
             String label = i.getUsername();
             instructorDropdown.addItem(label);
@@ -532,7 +466,6 @@ public class AdminDashboard extends JFrame {
         JTextField capacity = new JTextField();
         JTextField semester = new JTextField();
         JTextField year = new JTextField();
-
         Object[] form = {
                 "Course:", courseDropdown,
                 "Instructor:", instructorDropdown,
@@ -543,29 +476,17 @@ public class AdminDashboard extends JFrame {
                 "Year:", year
         };
 
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Add Section", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-
+        if (JOptionPane.showConfirmDialog(this, form, "Add Section", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             String courseKey = (String) courseDropdown.getSelectedItem();
             String instructorKey = (String) instructorDropdown.getSelectedItem();
 
-            var r = api.addSection(
-                    courseMap.get(courseKey),
-                    instructorMap.get(instructorKey),
-                    dayTime.getText(),
-                    room.getText(),
-                    Integer.parseInt(capacity.getText()),
-                    semester.getText(),
-                    Integer.parseInt(year.getText())
-            );
-
+            var r = api.addSection(courseMap.get(courseKey), instructorMap.get(instructorKey), dayTime.getText(), room.getText(), Integer.parseInt(capacity.getText()), semester.getText(), Integer.parseInt(year.getText()));
             JOptionPane.showMessageDialog(this, r.getMessage());
         }
     }
 
     //edit section
     private void openEditSectionDialog() {
-
         //fetch sections
         var res = api.listSections();
         if (!res.isSuccess()) {
@@ -576,7 +497,6 @@ public class AdminDashboard extends JFrame {
         List<Section> sections = res.getData();
         JComboBox<String> sectionDropdown = new JComboBox<>();
         Map<String, Section> sectionMap = new HashMap<>();
-
         for (Section s : sections) {
             String label = "Section " + s.getSectionId() + " - " + s.getCourse().getCourseId();
             sectionDropdown.addItem(label);
@@ -587,7 +507,6 @@ public class AdminDashboard extends JFrame {
         List<Course> courses = api.listCourses().getData();
         JComboBox<String> courseDropdown = new JComboBox<>();
         Map<String, Integer> courseMap = new HashMap<>();
-
         for (Course c : courses) {
             String label = c.getCode() + " - " + c.getTitle();
             courseDropdown.addItem(label);
@@ -598,14 +517,13 @@ public class AdminDashboard extends JFrame {
         List<Instructor> instructors = api.listInstructors().getData();
         JComboBox<String> instructorDropdown = new JComboBox<>();
         Map<String, String> instructorMap = new HashMap<>();
-
         for (Instructor i : instructors) {
             String label = i.getUsername();
             instructorDropdown.addItem(label);
             instructorMap.put(label, i.getUserId());
         }
 
-        //form (empty initially)
+        //form fields
         JTextField dayTime = new JTextField();
         JTextField room = new JTextField();
         JTextField capacity = new JTextField();
@@ -615,16 +533,10 @@ public class AdminDashboard extends JFrame {
         //load selected section into fields
         sectionDropdown.addActionListener(e -> {
             Section s = sectionMap.get(sectionDropdown.getSelectedItem());
-
             // course
-            for (String key : courseMap.keySet())
-                if (courseMap.get(key) == s.getCourse().getCourseId())
-                    courseDropdown.setSelectedItem(key);
-
+            for (String key : courseMap.keySet()) if (courseMap.get(key) == s.getCourse().getCourseId()) courseDropdown.setSelectedItem(key);
             // instructor
-            for (String key : instructorMap.keySet())
-                if (instructorMap.get(key).equals(s.getInstructor()))
-                    instructorDropdown.setSelectedItem(key);
+            for (String key : instructorMap.keySet()) if (instructorMap.get(key).equals(s.getInstructor().getUserId())) instructorDropdown.setSelectedItem(key);
 
             dayTime.setText(s.getDayTime());
             room.setText(s.getRoom());
@@ -633,9 +545,7 @@ public class AdminDashboard extends JFrame {
             year.setText(String.valueOf(s.getYear()));
         });
 
-        if (sectionDropdown.getItemCount() > 0)
-            sectionDropdown.setSelectedIndex(0);
-
+        if (sectionDropdown.getItemCount() > 0) sectionDropdown.setSelectedIndex(0);
         Object[] form = {
                 "Select Section:", sectionDropdown,
                 "Course:", courseDropdown,
@@ -647,36 +557,21 @@ public class AdminDashboard extends JFrame {
                 "Year:", year
         };
 
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Edit Section", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-
+        if (JOptionPane.showConfirmDialog(this, form, "Edit Section", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             Section original = sectionMap.get(sectionDropdown.getSelectedItem());
-
-            var r = api.updateSection(
-                    original.getSectionId(),
-                    courseMap.get(courseDropdown.getSelectedItem()),
-                    instructorMap.get(instructorDropdown.getSelectedItem()),
-                    dayTime.getText(),
-                    room.getText(),
-                    Integer.parseInt(capacity.getText()),
-                    semester.getText(),
-                    Integer.parseInt(year.getText())
-            );
-
+            var r = api.updateSection(original.getSectionId(), courseMap.get(courseDropdown.getSelectedItem()), instructorMap.get(instructorDropdown.getSelectedItem()), dayTime.getText(), room.getText(), Integer.parseInt(capacity.getText()), semester.getText(), Integer.parseInt(year.getText()));
             JOptionPane.showMessageDialog(this, r.getMessage());
         }
     }
 
     // delete section
     private void openDeleteSectionDialog() {
-
         //get all sections
         var res = api.listSections();
         if (!res.isSuccess()) {
             JOptionPane.showMessageDialog(this, res.getMessage());
             return;
         }
-
         List<Section> sections = res.getData();
         if (sections.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No sections available to delete.");
@@ -686,7 +581,6 @@ public class AdminDashboard extends JFrame {
         //dropdown
         JComboBox<String> sectionDropdown = new JComboBox<>();
         Map<String, Section> sectionMap = new HashMap<>();
-
         for (Section s : sections) {
             String label = "Section " + s.getSectionId()
                     + " | " + s.getCourse().getCode()
@@ -694,25 +588,14 @@ public class AdminDashboard extends JFrame {
             sectionDropdown.addItem(label);
             sectionMap.put(label, s);
         }
-
-        Object[] form = {
-                "Select Section to delete:", sectionDropdown
-        };
+        Object[] form = {"Select Section to delete:", sectionDropdown};
 
         //confirmation dialog
-        int choice = JOptionPane.showConfirmDialog(
-                this,
-                form,
-                "Delete Section",
-                JOptionPane.OK_CANCEL_OPTION
-        );
-
+        int choice = JOptionPane.showConfirmDialog(this, form, "Delete Section", JOptionPane.OK_CANCEL_OPTION);
         if (choice != JOptionPane.OK_OPTION) return;
-
         //get section
         String selectedLabel = (String) sectionDropdown.getSelectedItem();
         Section selected = sectionMap.get(selectedLabel);
-
         //delete
         var deleteRes = api.deleteSection(selected.getSectionId());
         JOptionPane.showMessageDialog(this, deleteRes.getMessage());
@@ -725,7 +608,6 @@ public class AdminDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, res.getMessage());
             return;
         }
-
         List<Section> sections = res.getData();
         JComboBox<String> sectionDropdown = new JComboBox<>();
         Map<String, Section> sectionMap = new HashMap<>();
@@ -736,11 +618,10 @@ public class AdminDashboard extends JFrame {
             sectionMap.put(label, s);
         }
 
-        // 3. Fetch instructors
+        //get instructors
         List<Instructor> instructors = api.listInstructors().getData();
         JComboBox<String> instructorDropdown = new JComboBox<>();
         Map<String, String> instructorMap = new HashMap<>();
-
         for (Instructor i : instructors) {
             String label = i.getUsername();
             instructorDropdown.addItem(label);
@@ -752,14 +633,9 @@ public class AdminDashboard extends JFrame {
                 "Instructor User ID:", instructorDropdown,
         };
 
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Assign Instructor", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, form, "Assign Instructor", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 
-            var r = api.assignInstructor(
-                    sectionMap.get(sectionDropdown.getSelectedItem()).getSectionId(),
-                    instructorMap.get(instructorDropdown.getSelectedItem())
-            );
-
+            var r = api.assignInstructor(sectionMap.get(sectionDropdown.getSelectedItem()).getSectionId(), instructorMap.get(instructorDropdown.getSelectedItem()));
             JOptionPane.showMessageDialog(this, r.getMessage());
         }
     }
@@ -767,7 +643,6 @@ public class AdminDashboard extends JFrame {
     //maintenance toggle
     private void toggleMaintenance() {
         Object[] options = {"Turn ON", "Turn OFF"};
-
         int sel = JOptionPane.showOptionDialog(this,
                 "Toggle Maintenance Mode:",
                 "Maintenance Mode",
@@ -780,37 +655,25 @@ public class AdminDashboard extends JFrame {
         if (sel == 2) return;
 
         boolean on = (sel == 0); //true if first button clicked
-
         var r = api.setMaintenance(on);
 
         JOptionPane.showMessageDialog(this, r.getMessage());
         maintenanceBanner.setVisible(on);
-
         maintenanceBanner.revalidate();
         maintenanceBanner.repaint();
     }
 
     //add drop date setter
     private void openAddDropDialog() {
-        JTextField dateField = new JTextField("2025-01-15"); // yyyy-mm-dd
-
-        Object[] form = {
-                "Set Add/Drop Deadline (YYYY-MM-DD):", dateField
-        };
-
-        if (JOptionPane.showConfirmDialog(this, form,
-                "Update Add/Drop Deadline",
-                JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-
+        JTextField dateField = new JTextField(); // yyyy-mm-dd
+        Object[] form = {"Set Add/Drop Deadline (YYYY-MM-DD):", dateField};
+        if (JOptionPane.showConfirmDialog(this, form, "Update Add/Drop Deadline", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             try {
                 LocalDate d = LocalDate.parse(dateField.getText().trim());
-
                 var r = UiContext.get().adddrop().setDeadline(d);
                 JOptionPane.showMessageDialog(this, r.getMessage());
-
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Invalid date format! Use YYYY-MM-DD\n" + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Invalid date format! Use YYYY-MM-DD\n" + ex.getMessage());
             }
         }
     }

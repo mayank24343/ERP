@@ -9,7 +9,7 @@ public class Section {
     private final int capacity;
     private final String semester;
     private final int year;
-
+    //constructor
     public Section(int sectionId, Course course, Instructor instructor, String dayTime, String room, int capacity, String semester, int year) {
         this.sectionId = sectionId;
         this.course = course;
@@ -20,7 +20,7 @@ public class Section {
         this.semester = semester;
         this.year = year;
     }
-
+    //getters
     public int getSectionId() { return sectionId; }
     public Course getCourse() { return course; }
     public Instructor getInstructor() { return instructor; }

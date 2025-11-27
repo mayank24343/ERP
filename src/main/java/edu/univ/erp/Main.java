@@ -7,16 +7,11 @@ import edu.univ.erp.ui.UiContext;
 import javax.swing.*;
 
 public class Main {
-
+    //main to start the app
     public static void main(String[] args) {
         FlatLightLaf.setup(); // enable flatlaf
         // Swing UI must run on EDT
-        SwingUtilities.invokeLater(() -> {
-            UiContext ctx = UiContext.get();
-
-            LoginWindow login = new LoginWindow(ctx.auth(), ctx.users());
-            login.setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> {UiContext ctx = UiContext.get(); LoginWindow login = new LoginWindow(ctx.auth(), ctx.users()); login.setVisible(true);});
     }
 }
 

@@ -5,7 +5,6 @@ import edu.univ.erp.domain.GradeSlab;
 import edu.univ.erp.ui.UiContext;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.List;
 
 public class GradeSlabService {
@@ -17,12 +16,12 @@ public class GradeSlabService {
         this.maintenanceService = new MaintenanceService(ds);
     }
 
-    public List<GradeSlab> getSlabs(int sectionId, String instructorId) throws SQLException, ServiceException {
+    public List<GradeSlab> getSlabs(int sectionId, String instructorId) throws Exception {
         UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
         return dao.getSlabs(sectionId);
     }
 
-    public void addSlab(int sectionId, String letter, double min, double max, String instructorId) throws SQLException, ServiceException {
+    public void addSlab(int sectionId, String letter, double min, double max, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         UiContext.get().access().requireInstructorForSectionAccess(instructorId, sectionId);
         List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
@@ -37,7 +36,14 @@ public class GradeSlabService {
         dao.insertSlab(sectionId, letter, min, max);
     }
 
-    public void updateSlab(GradeSlab slab, int sectionId, String instructorId) throws SQLException, ServiceException {
+    public void deleteSlab(int slabId, int sectionId, String instructorId) throws Exception {
+        maintenanceService.requireWriteAllowed();
+        UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
+        List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
+        dao.deleteSlab(slabId);
+    }
+
+    public void updateSlab(GradeSlab slab, int sectionId, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
         List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
@@ -50,12 +56,5 @@ public class GradeSlabService {
             }
         }
         dao.updateSlab(slab);
-    }
-
-    public void deleteSlab(int slabId, int sectionId, String instructorId) throws SQLException, ServiceException {
-        maintenanceService.requireWriteAllowed();
-        UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
-        List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
-        dao.deleteSlab(slabId);
     }
 }

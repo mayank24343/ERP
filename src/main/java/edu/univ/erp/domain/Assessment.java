@@ -1,7 +1,6 @@
 package edu.univ.erp.domain;
 
 public class Assessment {
-
     private final int id;
     private final int sectionId;
     private final String name;
@@ -21,9 +20,4 @@ public class Assessment {
     public String getName() { return name; }
     public double getMaxMarks() { return maxMarks; }
     public double getWeight() { return weight; }
-
-    @Override
-    public String toString() {
-        return name + " (" + weight + "%, max=" + maxMarks + ")";
-    }
 }

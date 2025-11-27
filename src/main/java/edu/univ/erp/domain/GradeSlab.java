@@ -6,7 +6,7 @@ public class GradeSlab {
     private final String letter;
     private final double min;
     private final double max;
-
+    //constructor
     public GradeSlab(int id, int sectionId, String letter, double min, double max) {
         this.id = id;
         this.sectionId = sectionId;
@@ -14,7 +14,7 @@ public class GradeSlab {
         this.min = min;
         this.max = max;
     }
-
+    //getters
     public int getId() { return id; }
     public int getSectionId() { return sectionId; }
     public String getLetter() { return letter; }

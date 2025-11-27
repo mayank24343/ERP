@@ -8,9 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AssessmentDao {
-
     private final DataSource ds;
-
     public AssessmentDao(DataSource ds) {
         this.ds = ds;
     }

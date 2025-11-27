@@ -6,7 +6,6 @@ import edu.univ.erp.service.UserService;
 
 public class UserApi {
     private final UserService userService;
-
     //constructor
     public UserApi(UserService userService) {
         this.userService = userService;

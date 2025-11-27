@@ -5,9 +5,7 @@ import java.sql.*;
 import java.time.LocalDate;
 
 public class AddDropDao {
-
     private final DataSource ds;
-
     public AddDropDao(DataSource ds) {
         this.ds = ds;
     }

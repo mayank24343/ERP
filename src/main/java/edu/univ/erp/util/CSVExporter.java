@@ -6,17 +6,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class CSVExporter {
-
     public static boolean exportTable(JTable table, String defaultName) {
         JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new java.io.File(defaultName + ".csv"));
 
         if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             java.io.File file = chooser.getSelectedFile();
-
             try (FileWriter fw = new FileWriter(file)) {
                 TableModel model = table.getModel();
-
                 //header row
                 for (int col = 0; col < model.getColumnCount(); col++) {
                     fw.write(model.getColumnName(col));
@@ -33,7 +30,6 @@ public class CSVExporter {
                     }
                     fw.write("\n");
                 }
-
                 JOptionPane.showMessageDialog(null, "CSV exported successfully!");
                 return true;
 
@@ -42,7 +38,6 @@ public class CSVExporter {
                 return false;
             }
         }
-
         return false;
     }
 }

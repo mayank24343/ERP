@@ -3,22 +3,17 @@ package edu.univ.erp.access;
 import edu.univ.erp.domain.User;
 
 public class CurrentSession {
-
     private static User currentUser;
-
-    public static synchronized void set(User user) {
+    //user of the app setting, getting and removing
+    public static void set(User user) {
         currentUser = user;
     }
 
-    public static synchronized User get() {
+    public static User get() {
         return currentUser;
     }
 
-    public static synchronized boolean isLoggedIn() {
-        return currentUser != null;
-    }
-
-    public static synchronized void clear() {
+    public static void clear() {
         currentUser = null;
     }
 }

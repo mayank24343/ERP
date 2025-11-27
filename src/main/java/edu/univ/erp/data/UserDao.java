@@ -113,18 +113,6 @@ public class UserDao {
         return list;
     }
 
-    // filters all users to find only Students
-    // then loads their full details
-    public List<Student> findAllStudents() throws SQLException {
-        var list = new ArrayList<Student>();
-        for (User user : findAllUsers()) {
-            if (Objects.equals(user.getRole(), "student")) {
-                list.add(loadStudent(user));
-            }
-        }
-        return list;
-    }
-
     // this is a helper function that maps a database row to a basic user object
     private User mapUser(ResultSet rs) throws SQLException {
         return new User(

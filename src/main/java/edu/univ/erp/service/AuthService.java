@@ -15,7 +15,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 public class AuthService {
-
     private final AuthDao authDao;
     private final MaintenanceDao maintenanceDao;
     private final int MAX_ATTEMPTS = 5; //upto 5 password attempts

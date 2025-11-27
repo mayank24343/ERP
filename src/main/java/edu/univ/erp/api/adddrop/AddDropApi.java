@@ -16,7 +16,7 @@ public class AddDropApi {
     public ApiResult<Void> setDeadline(LocalDate date) {
         try {
             service.updateDeadline(date);
-            return ApiResult.okMessage("Add/Drop deadline updated.");
+            return ApiResult.okMessage("Add/Drop Deadline Updated.");
         } catch (Exception ex) {
             return ApiResult.error("Failed: " + ex.getMessage());
         }

@@ -12,7 +12,7 @@ public class User {
         private final int failedAttempts;
         private final Timestamp lockedUntil;
         private final Timestamp lastLogin;
-
+        //constructor
         public User(String fullname, String userId, String username, String role, String passwordHash, String status, int failedAttempts, Timestamp lockedUntil, Timestamp lastLogin) {
             this.fullname = fullname;
             this.userId = userId;
@@ -24,7 +24,7 @@ public class User {
             this.lockedUntil = lockedUntil;
             this.lastLogin = lastLogin;
         }
-
+        //getters
         public String getFullname() {
             return fullname;
         }

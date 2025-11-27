@@ -7,7 +7,6 @@ import edu.univ.erp.service.AuthService;
 
 public class AuthApi {
     private final AuthService service;
-
     //constructor to add service to Api
     public AuthApi(AuthService auth) {
         this.service = auth;
@@ -27,7 +26,7 @@ public class AuthApi {
     public ApiResult<Void> logoutUser() {
         try {
             service.logout();
-            return ApiResult.okMessage("Logged Out.");
+            return ApiResult.okMessage("Logged Out Successfully.");
         } catch (Exception e) {
             return ApiResult.error(e.getMessage());
         }
@@ -37,7 +36,7 @@ public class AuthApi {
     public ApiResult<Void> changePassword(String username, String oldPass, String newPass) {
         try {
             service.changePassword(username, oldPass, newPass);
-            return ApiResult.okMessage("Password Changed.");
+            return ApiResult.okMessage("Password Changed Successfully.");
         } catch (Exception e) {
             return ApiResult.error(e.getMessage());
         }

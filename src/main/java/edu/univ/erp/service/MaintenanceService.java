@@ -13,9 +13,19 @@ public class MaintenanceService {
         this.dao = new MaintenanceDao(erpDS);
     }
 
+    //turn off maintenance
+    public void turnOff() throws SQLException {
+        dao.setMaintenance(false);
+    }
+
     //check if maintenance is on
     public boolean isMaintenanceOn() throws SQLException {
         return dao.isMaintenanceOn();
+    }
+
+    //turn on maintenance
+    public void turnOn() throws SQLException {
+        dao.setMaintenance(true);
     }
 
     //if a function writes to data, check if maintenance is off, else throw error
@@ -29,16 +39,6 @@ public class MaintenanceService {
             e.printStackTrace();
             throw new ServiceException("Error checking maintenance mode.", e);
         }
-    }
-
-    //turn on maintenance
-    public void turnOn() throws SQLException {
-        dao.setMaintenance(true);
-    }
-
-    //turn off maintenance
-    public void turnOff() throws SQLException {
-        dao.setMaintenance(false);
     }
 
 }
