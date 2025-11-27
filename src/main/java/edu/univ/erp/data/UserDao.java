@@ -1,63 +1,41 @@
 package edu.univ.erp.data;
 
 import edu.univ.erp.domain.*;
-
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class UserDao {
     private final DataSource authDS;
     private final DataSource erpDS;
 
-    //constructor
     public UserDao(DataSource authDS, DataSource erpDS) {
         this.authDS = authDS;
         this.erpDS = erpDS;
     }
 
-    //return the user of required type for the dashboard
+    // this finds a user by username and loads their specific profile like Student/Instructor
     public User findFullUserByUsername(String username) throws SQLException {
-
-        AuthDao authDao = new AuthDao(authDS);
+        var authDao = new AuthDao(authDS);
         var opt = authDao.findByUsername(username);
 
         if (opt.isEmpty()) return null;
-
-        User base = opt.get();
-
-        switch (base.getRole().toLowerCase()) {
-            case "student":
-                return loadStudent(base);
-            case "instructor":
-                return loadInstructor(base);
-            case "admin":
-                return new Admin(
-                        base.getFullname(),
-                        base.getUserId(),
-                        base.getUsername(),
-                        base.getRole(),
-                        base.getPasswordHash(),
-                        base.getStatus(),
-                        base.getFailedAttempts(),
-                        base.getLockedUntil(),
-                        base.getLastLogin());
-            default:
-                throw new SQLException("Unknown role: " + base.getRole());
-        }
+        return enrichUser(opt.get());
     }
 
+    // finds a user by user ID and loads their specific profile like Student/Instructor
     public User findFullUserByUserId(String userId) throws SQLException {
-        AuthDao authDao = new AuthDao(authDS);
+        var authDao = new AuthDao(authDS);
         var opt = authDao.findByUserId(userId);
 
         if (opt.isEmpty()) return null;
+        return enrichUser(opt.get());
+    }
 
-        User base = opt.get();
-
+    // this is a helper function that takes a basic user and decides if we need to fetch extra Student or Instructor details
+    private User enrichUser(User base) throws SQLException {
         switch (base.getRole().toLowerCase()) {
             case "student":
                 return loadStudent(base);
@@ -65,134 +43,94 @@ public class UserDao {
                 return loadInstructor(base);
             case "admin":
                 return new Admin(
-                        base.getFullname(),
-                        base.getUserId(),
-                        base.getUsername(),
-                        base.getRole(),
-                        base.getPasswordHash(),
-                        base.getStatus(),
-                        base.getFailedAttempts(),
-                        base.getLockedUntil(),
-                        base.getLastLogin());
+                    base.getFullname(), base.getUserId(), base.getUsername(), base.getRole(),
+                    base.getPasswordHash(), base.getStatus(), base.getFailedAttempts(),
+                    base.getLockedUntil(), base.getLastLogin()
+                );
             default:
                 throw new SQLException("Unknown role: " + base.getRole());
         }
     }
 
-    //check student table for user and return student object if found
+    // fetches extra academic details (roll no, program) for a student
     private Student loadStudent(User base) throws SQLException {
-        String sql = "SELECT roll_no, program, year FROM students WHERE user_id = ?";
+        var sql = "SELECT roll_no, program, year FROM students WHERE user_id = ?";
 
-        try (Connection conn = erpDS.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = erpDS.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, base.getUserId());
-            ResultSet rs = ps.executeQuery();
+            try (var rs = ps.executeQuery()) {
+                if (!rs.next()) throw new SQLException("Student profile missing for user_id: " + base.getUserId());
 
-            if (!rs.next())
-                throw new SQLException("Student profile missing for user_id: " + base.getUserId());
-
-            return new Student(
-                    base.getFullname(),
-                    base.getUserId(),
-                    base.getUsername(),
-                    base.getRole(),
-                    base.getPasswordHash(),
-                    base.getStatus(),
-                    base.getFailedAttempts(),
-                    base.getLockedUntil(),
-                    base.getLastLogin(),
-                    rs.getString("roll_no"),
-                    rs.getString("program"),
-                    rs.getInt("year")
-            );
-        }
-    }
-
-    //check instructor table for user & return instructor object if found
-    private Instructor loadInstructor(User base) throws SQLException {
-        String sql = "SELECT department, designation FROM instructors WHERE user_id = ?";
-
-        try (Connection conn = erpDS.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, base.getUserId());
-            ResultSet rs = ps.executeQuery();
-
-            if (!rs.next())
-                throw new SQLException("Instructor profile missing for user_id: " + base.getUserId());
-
-            return new Instructor(
-                    base.getFullname(),
-                    base.getUserId(),
-                    base.getUsername(),
-                    base.getRole(),
-                    base.getPasswordHash(),
-                    base.getStatus(),
-                    base.getFailedAttempts(),
-                    base.getLockedUntil(),
-                    base.getLastLogin(),
-                    rs.getString("department"),
-                    rs.getString("designation")
-            );
-        }
-    }
-
-    //list of all users
-    public List<User> findAllUsers() throws SQLException {
-        List<User> list = new ArrayList<>();
-        String sql = "SELECT * FROM auth_users";
-
-        try (Connection conn = authDS.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                list.add(mapUser(rs));  // map each row into User
+                return new Student(
+                    base.getFullname(), base.getUserId(), base.getUsername(), base.getRole(),
+                    base.getPasswordHash(), base.getStatus(), base.getFailedAttempts(),
+                    base.getLockedUntil(), base.getLastLogin(),
+                    rs.getString("roll_no"), rs.getString("program"), rs.getInt("year")
+                );
             }
         }
+    }
 
+    // fetches extra professional details (department + designation) for an instructor
+    private Instructor loadInstructor(User base) throws SQLException {
+        var sql = "SELECT department, designation FROM instructors WHERE user_id = ?";
+
+        try (var conn = erpDS.getConnection(); var ps = conn.prepareStatement(sql)) {
+            ps.setString(1, base.getUserId());
+            try (var rs = ps.executeQuery()) {
+                if (!rs.next()) throw new SQLException("Instructor profile missing for user_id: " + base.getUserId());
+
+                return new Instructor(
+                    base.getFullname(), base.getUserId(), base.getUsername(), base.getRole(),
+                    base.getPasswordHash(), base.getStatus(), base.getFailedAttempts(),
+                    base.getLockedUntil(), base.getLastLogin(),
+                    rs.getString("department"), rs.getString("designation")
+                );
+            }
+        }
+    }
+
+    // returns a list of all users from the authentication database
+    public List<User> findAllUsers() throws SQLException {
+        var list = new ArrayList<User>();
+        var sql = "SELECT * FROM auth_users";
+
+        try (var conn = authDS.getConnection(); var ps = conn.prepareStatement(sql); var rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapUser(rs));
+        }
         return list;
     }
 
-    //list of all instructors
+    // filters all users to find only instructors
+    // then loads their full details
     public List<Instructor> findAllInstructors() throws SQLException {
-        List<User> users = findAllUsers();
-        List<Instructor> list = new ArrayList<>();
-        for  (User user : users) {
-            if (Objects.equals(user.getRole(), "instructor")){
+        var list = new ArrayList<Instructor>();
+        for (User user : findAllUsers()) {
+            if (Objects.equals(user.getRole(), "instructor")) {
                 list.add(loadInstructor(user));
             }
         }
-
         return list;
     }
 
-    //list of all students
+    // filters all users to find only Students
+    // then loads their full details
     public List<Student> findAllStudents() throws SQLException {
-        List<User> users = findAllUsers();
-        List<Student> list = new ArrayList<>();
-        for  (User user : users) {
-            if (Objects.equals(user.getRole(), "student")){
+        var list = new ArrayList<Student>();
+        for (User user : findAllUsers()) {
+            if (Objects.equals(user.getRole(), "student")) {
                 list.add(loadStudent(user));
             }
         }
-
         return list;
     }
 
-    //user mapping
+    // this is a helper function that maps a database row to a basic user object
     private User mapUser(ResultSet rs) throws SQLException {
         return new User(
-                rs.getString("full_name"),
-                rs.getString("user_id"),
-                rs.getString("username"),
-                rs.getString("role"),
-                rs.getString("password_hash"),
-                rs.getString("status"),
-                rs.getInt("failed_attempts"),
-                rs.getTimestamp("locked_until"),
-                rs.getTimestamp("last_login")
+            rs.getString("full_name"), rs.getString("user_id"), rs.getString("username"),
+            rs.getString("role"), rs.getString("password_hash"), rs.getString("status"),
+            rs.getInt("failed_attempts"), rs.getTimestamp("locked_until"), rs.getTimestamp("last_login")
         );
     }
 }
