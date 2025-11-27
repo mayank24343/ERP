@@ -82,20 +82,6 @@ public class FinalGradeDao {
         );
     }
 
-    // fetches a previously saved final grade from the database
-    public FinalGrade getFinalGrade(int sectionId, String studentId) throws SQLException {
-        var sql = "SELECT section_id, student_id, percentage, letter_grade FROM final_grades WHERE section_id = ? AND student_id = ?";
-
-        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, sectionId);
-            ps.setString(2, studentId);
-            try (var rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null;
-    }
-
     // gets a list of all final grades ever recorded for a specific student
     public List<FinalGrade> getFinalGradesForStudent(String studentId) throws SQLException {
         var sql = "SELECT section_id, student_id, percentage, letter_grade FROM final_grades WHERE student_id = ? ORDER BY section_id";
@@ -120,15 +106,6 @@ public class FinalGradeDao {
             ps.setString(2, g.getStudent().getUserId());
             ps.setDouble(3, g.getPercentage());
             ps.setString(4, g.getLetter());
-            ps.executeUpdate();
-        }
-    }
-
-    // deletes all final grades for a specific section
-    public void deleteFinalsForSection(int sectionId) throws SQLException {
-        var sql = "DELETE FROM final_grades WHERE section_id = ?";
-        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, sectionId);
             ps.executeUpdate();
         }
     }
