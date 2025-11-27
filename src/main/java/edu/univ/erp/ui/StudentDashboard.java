@@ -36,6 +36,8 @@ public class StudentDashboard extends JFrame {
     private JPanel registerCard;
     private JPanel timetableCard;
     private JPanel gradesCard;
+    private JPanel completedCard;
+    private JTable completedTable;
 
     //tables
     private JTable catalogTable;
@@ -93,18 +95,23 @@ public class StudentDashboard extends JFrame {
         JButton b3 = createNavButton("Register");
         JButton b4 = createNavButton("Timetable");
         JButton b5 = createNavButton("Grades");
+        JButton b6 = createNavButton("Completed Courses");
+
+
 
         b1.addActionListener(e -> showCard("catalog"));
         b2.addActionListener(e -> showCard("mysections"));
         b3.addActionListener(e -> showCard("register"));
         b4.addActionListener(e -> showCard("timetable"));
         b5.addActionListener(e -> showCard("grades"));
+        b6.addActionListener(e -> showCard("completed"));
 
         navPanel.add(b1);
         navPanel.add(b2);
         navPanel.add(b3);
         navPanel.add(b4);
         navPanel.add(b5);
+        navPanel.add(b6);
 
         //card layout for the functionality screens
         cardLayout = new CardLayout();
@@ -116,6 +123,7 @@ public class StudentDashboard extends JFrame {
         initRegisterCard();
         initTimetableCard();
         initGradesCard();
+        initCompletedCard();
 
         //add them to the content panel
         //by default catalog will be shown
@@ -124,6 +132,7 @@ public class StudentDashboard extends JFrame {
         contentPanel.add(registerCard, "register");
         contentPanel.add(timetableCard, "timetable");
         contentPanel.add(gradesCard, "grades");
+        contentPanel.add(completedCard, "completed");
 
         add(createTopBar(studentUser.getFullname()), BorderLayout.NORTH); //top bar with welcome, logout, change password
         add(buildMaintenanceBanner(maintenanceOn), BorderLayout.AFTER_LAST_LINE);// maintenance flag
@@ -336,6 +345,9 @@ public class StudentDashboard extends JFrame {
 
         JButton refresh = new JButton("Refresh");
         JButton drop = new JButton("Drop Section");
+        JButton export = new JButton("Export");
+        export.addActionListener(e -> CSVExporter.exportTable(mySectionsTable,
+                "my_registered_sections"));
 
         refresh.addActionListener(e -> loadMySections());
         drop.addActionListener(e -> dropSelectedSection());
@@ -345,6 +357,7 @@ public class StudentDashboard extends JFrame {
         top.add(drop);
         top.add(new JLabel("Sort by:"));
         top.add(sortBox);
+        top.add(export);
 
         mySectionsCard.add(top, BorderLayout.NORTH);
         mySectionsCard.add(new JScrollPane(mySectionsTable), BorderLayout.CENTER);
@@ -535,6 +548,41 @@ public class StudentDashboard extends JFrame {
         breakdownModel.setData(r.getData());
     }
 
+    //finsished courses
+    private void initCompletedCard() {
+        completedCard = new JPanel(new BorderLayout());
+        completedCard.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+
+        completedTable = new JTable();
+        completedCard.add(new JScrollPane(completedTable), BorderLayout.CENTER);
+
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton load = new JButton("Get Finished Courses");
+        JButton export = new JButton("Export");
+        export.addActionListener(e -> CSVExporter.exportTable(completedTable,
+                "my_finished_courses"));
+
+
+        load.addActionListener(e -> loadCompletedCourses());
+
+        top.add(load);
+        top.add(export);
+
+        contentPanel.add(completedCard, "completed");
+    }
+
+    //
+    private void loadCompletedCourses() {
+        var r = api.getCompletedSections(studentUser.getUserId());
+        if (!r.isSuccess()) {
+            JOptionPane.showMessageDialog(this, r.getMessage());
+            return;
+        }
+
+        completedTable.setModel(new SectionListModel(r.getData()));
+    }
+
+
     //models for tables
     private static class CatalogTableModel extends AbstractTableModel {
         private final String[] cols = {"Course ID", "Code", "Title", "Credits"};
@@ -690,4 +738,63 @@ public class StudentDashboard extends JFrame {
             return null;
         }
     }
+
+    public class SectionListModel extends AbstractTableModel {
+
+        private final String[] cols = {
+                "Section ID", "Course Code", "Course Title",
+                "Instructor", "Time", "Room", "Capacity", "Semester", "Year"
+        };
+
+        private List<Section> data = new ArrayList<>();
+
+        public SectionListModel() {}
+
+        public SectionListModel(List<Section> list) {
+            setData(list);
+        }
+
+        public void setData(List<Section> list) {
+            this.data = list;
+            fireTableDataChanged();
+        }
+
+        public Section get(int row) {
+            return data.get(row);
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return cols.length;
+        }
+
+        @Override
+        public String getColumnName(int c) {
+            return cols[c];
+        }
+
+        @Override
+        public Object getValueAt(int r, int c) {
+            Section s = data.get(r);
+
+            return switch (c) {
+                case 0 -> s.getSectionId();
+                case 1 -> s.getCourse().getCode();
+                case 2 -> s.getCourse().getTitle();
+                case 3 -> s.getInstructor().getFullname();
+                case 4 -> s.getDayTime();
+                case 5 -> s.getRoom();
+                case 6 -> s.getCapacity();
+                case 7 -> s.getSemester();
+                case 8 -> s.getYear();
+                default -> null;
+            };
+        }
+    }
+
 }

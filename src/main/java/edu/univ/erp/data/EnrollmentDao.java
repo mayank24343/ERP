@@ -1,9 +1,6 @@
 package edu.univ.erp.data;
 
-import edu.univ.erp.domain.Enrollment;
-import edu.univ.erp.domain.Student;
-import edu.univ.erp.domain.Section;
-import edu.univ.erp.domain.User;
+import edu.univ.erp.domain.*;
 import edu.univ.erp.util.DataSourceProvider;
 
 import javax.sql.DataSource;
@@ -14,9 +11,13 @@ import java.util.Optional;
 
 public class EnrollmentDao {
     private final DataSource ds;
+    private final CourseDao courseDao;
+    private final UserDao userDao;
 
     public EnrollmentDao(DataSource ds) {
         this.ds = ds;
+        this.courseDao = new CourseDao(ds);
+        this.userDao = new UserDao(DataSourceProvider.getAuthDataSource(), DataSourceProvider.getERPDataSource());
     }
 
     // ---------------------------------------------------------
@@ -185,6 +186,53 @@ public class EnrollmentDao {
         }
 
         return ids;
+    }
+
+    public void markSectionCompleted(int sectionId) throws SQLException {
+        String sql = "UPDATE enrollments SET status='completed' WHERE section_id=? AND status='registered'";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, sectionId);
+            ps.executeUpdate();
+        }
+    }
+
+    public List<Section> getCompletedSections(String studentId) throws SQLException {
+        String sql = """
+        SELECT s.* FROM enrollments e
+        JOIN sections s ON e.section_id = s.section_id
+        WHERE e.student_id=? AND e.status='completed'
+    """;
+
+        List<Section> result = new ArrayList<>();
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, studentId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                result.add(mapsSection(rs)); // your existing mapper
+            }
+        }
+        return result;
+    }
+
+    //map row to Section
+    private Section mapsSection(ResultSet rs) throws SQLException {
+        return new Section(
+                rs.getInt("section_id"),
+                courseDao.getCourse(rs.getInt("course_id")),
+                (Instructor) userDao.findFullUserByUserId(rs.getString("instructor_id")),
+                rs.getString("day_time"),
+                rs.getString("room"),
+                rs.getInt("capacity"),
+                rs.getString("semester"),
+                rs.getInt("year")
+        );
     }
 
     // ---------------------------------------------------------

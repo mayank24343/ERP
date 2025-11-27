@@ -104,7 +104,12 @@ public class StudentService {
         return sectionDao.getSectionsForStudent(studentId);
     }
 
-    //
+    //finished courses
+    public List<Section> getCompletedSections(String studentId) throws SQLException {
+        return enrollmentDao.getCompletedSections(studentId);
+    }
+
+    //component wise grades
     public List<GradeView> getGradeBreakdown(String studentId) throws Exception {
         //access management
         UiContext.get().access().requireStudentAccess(studentId);

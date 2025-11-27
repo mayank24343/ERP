@@ -103,7 +103,7 @@ public class InstructorApi {
     public ApiResult<String> finalizeGrades(int sectionId,  String instructorId) {
         try {
             service.computeAndStoreFinals(sectionId,   instructorId);
-            return ApiResult.okMessage("Final grades computed and saved.");
+            return ApiResult.okMessage("Final grades submitted and course marked completed.");
         } catch (Exception e) {
             return ApiResult.error("Failed to finalize grades: " + e.getMessage());
         }

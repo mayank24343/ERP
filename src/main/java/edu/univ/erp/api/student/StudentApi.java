@@ -87,4 +87,14 @@ public class StudentApi {
             return ApiResult.error("Failed To Load Final Grades: " + e.getMessage());
         }
     }
+
+    //finsihed courses
+    public ApiResult<List<Section>> getCompletedSections(String studentId) {
+        try {
+            return ApiResult.ok(service.getCompletedSections(studentId));
+        } catch (Exception e) {
+            return ApiResult.error(e.getMessage());
+        }
+    }
+
 }

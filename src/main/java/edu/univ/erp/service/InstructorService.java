@@ -89,17 +89,7 @@ public class InstructorService {
         maintenanceService.requireWriteAllowed();
         accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         finalGradeDao.computeAndStoreFinals(sectionId);
-    }
-
-    //final grade for a student
-    public FinalGrade getFinalGrade(int sectionId, String studentId) throws SQLException, ServiceException {
-        accessManager.requireStudentAccess(studentId);
-        // return stored final grade if exists
-        FinalGrade fg = finalGradeDao.getFinalGrade(sectionId, studentId);
-        if (fg != null) return fg;
-
-        // or compute fresh if not saved yet
-        return finalGradeDao.computeForStudent(sectionId, studentId);
+        enrollmentDao.markSectionCompleted(sectionId);
     }
 
     //final grades for a section
