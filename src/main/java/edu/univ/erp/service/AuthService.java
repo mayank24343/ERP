@@ -32,8 +32,7 @@ public class AuthService {
         Optional<User> maybe = authDao.findByUsername(username);
         //optional to handle null objects
 
-        if (maybe.isEmpty())
-            throw new ServiceException("Incorrect username or password.");
+        if (maybe.isEmpty()) throw new ServiceException("Incorrect username or password.");
 
         User user = maybe.get();
 

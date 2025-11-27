@@ -116,7 +116,7 @@ public class EnrollmentDao {
         SELECT stu.user_id, stu.roll_no, stu.program, stu.year
         FROM enrollments e
         JOIN students stu ON e.student_id = stu.user_id
-        WHERE e.section_id = ? AND e.status = 'registered'
+        WHERE e.section_id = ?
         ORDER BY stu.roll_no
     """;
 

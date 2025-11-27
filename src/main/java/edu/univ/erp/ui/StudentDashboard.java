@@ -568,6 +568,7 @@ public class StudentDashboard extends JFrame {
         top.add(load);
         top.add(export);
 
+        completedCard.add(top, BorderLayout.NORTH);
         contentPanel.add(completedCard, "completed");
     }
 

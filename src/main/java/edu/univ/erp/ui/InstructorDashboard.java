@@ -962,7 +962,7 @@ public class InstructorDashboard extends JFrame {
             InstructorService.StudentGradeRow row = rows.get(r);
 
             if (c == 0) return row.getStudent().getRollNo();
-            if (c == 1) return row.getStudent().getUsername();
+            if (c == 1) return row.getStudent().getFullname();
 
             int assessIndex = c - 2;
 

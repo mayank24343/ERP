@@ -56,10 +56,13 @@ public class AccessManager {
 
         try {
             var sec = sectionDao.getSection(sectionId);
+            System.out.println("DEBUG CHECK:");
+            System.out.println("section.instructor = " + sec.getInstructor());
+            System.out.println("instructorUser = " + current().getUserId());
             if (sec == null)
                 throw new ServiceException("Section not found.");
 
-            if (!sec.getInstructor().equals(instructorId))
+            if (!sec.getInstructor().getUserId().equals(instructorId))
                 throw new ServiceException("Not your section.");
 
         } catch (SQLException e) {

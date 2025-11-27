@@ -187,7 +187,7 @@ public class FinalGradeDao {
         String sql = """
             SELECT student_id
             FROM enrollments
-            WHERE section_id = ? AND status = 'registered'
+            WHERE section_id = ?
         """;
 
         List<String> list = new ArrayList<>();

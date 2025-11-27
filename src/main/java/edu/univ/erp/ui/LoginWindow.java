@@ -153,17 +153,16 @@ public class LoginWindow extends JFrame {
             return;
         }
 
-
         // Authenticate the user & Open dashboard if user authenticated & loaded
         var res= authApi.authenticateUser(username,password);
         if (res.getData() == null) {
-            JOptionPane.showMessageDialog(this, res, "Login Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, res.getMessage(), "Login Failed", JOptionPane.ERROR_MESSAGE);
         }
         else{
             User baseUser = res.getData();
             var res2 = userApi.loadUserProfile(baseUser);
             if (res2.getData() == null){
-                JOptionPane.showMessageDialog(this, res2, "Login Failed", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, res2.getMessage(), "Login Failed", JOptionPane.ERROR_MESSAGE);
             }
             else{
                 User full = res2.getData();
