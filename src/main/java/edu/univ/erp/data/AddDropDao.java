@@ -16,11 +16,7 @@ public class AddDropDao {
     // it updates a date if it already exists. If a date does not exist, then it creates a new one 
     public void setDeadline(LocalDate date) throws SQLException {
         // SQL query: Try to insert ID 1. If ID 1 exists, update the deadline instead.
-        var sql = """
-            INSERT INTO add_drop_deadline (id, deadline)
-            VALUES (1, ?)
-            ON DUPLICATE KEY UPDATE deadline = VALUES(deadline)
-        """;
+        var sql = " INSERT INTO add_drop_deadline (id, deadline) VALUES (1, ?) ON DUPLICATE KEY UPDATE deadline = VALUES(deadline)";
 
         try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(date)); // Convert Java date to Database date
