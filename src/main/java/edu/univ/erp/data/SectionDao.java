@@ -106,6 +106,15 @@ public class SectionDao {
         }
     }
 
+    //delete section
+    public void deleteSection(int sectionId) throws SQLException {
+        String sql = "DELETE FROM sections WHERE section_id=?";
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, sectionId);
+            ps.executeUpdate();
+        }
+    }
+
     //get all sections
     public List<Section> getAllSections() throws SQLException {
         String sql = "SELECT * FROM sections";
@@ -156,6 +165,22 @@ public class SectionDao {
                     int enrolled = rs.getInt("enrolled");
                     int cap = rs.getInt("cap");
                     return enrolled < cap;
+                }
+            }
+        }
+        return false;
+    }
+
+    //check if students in section
+    public boolean hasStudents(int sectionId) throws SQLException {
+        String sql = " SELECT (SELECT COUNT(*) FROM enrollments WHERE section_id=? AND status='registered') AS enrolled, (SELECT capacity FROM sections WHERE section_id=?) AS cap ";
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, sectionId);
+            ps.setInt(2, sectionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int enrolled = rs.getInt("enrolled");
+                    return enrolled > 0;
                 }
             }
         }

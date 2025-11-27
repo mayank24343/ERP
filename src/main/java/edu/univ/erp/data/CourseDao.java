@@ -41,6 +41,15 @@ public class CourseDao {
         }
     }
 
+    //delete course
+    public void deleteCourse(int id) throws SQLException {
+        String sql = "DELETE FROM courses WHERE course_id = ?";
+        try (Connection conn = ds.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+        }
+    }
+
     //get Course by id
     public Course getCourse(int courseId) throws SQLException {
         String sql = "SELECT * FROM courses WHERE course_id = ?";

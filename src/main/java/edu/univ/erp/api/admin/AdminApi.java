@@ -118,4 +118,23 @@ public class AdminApi {
         }
 
     }
+
+    public ApiResult<Void> deleteSection(int sectionId) {
+        try {
+            service.deleteSection(sectionId);
+            return  ApiResult.okMessage("Section deleted.");
+        } catch ( Exception e){
+            return ApiResult.error(e.getMessage());
+        }
+    }
+
+    public ApiResult<Void> deleteCourse(int courseId) {
+        try {
+            service.deleteCourse(courseId);
+            return ApiResult.okMessage("Course deleted.");
+        } catch ( Exception e){
+            return ApiResult.error(e.getMessage());
+        }
+    }
+
 }

@@ -162,4 +162,21 @@ public class AdminService {
             maintenanceService.turnOff();
         }
     }
+
+    //delete section
+    public void deleteSection(int sectionID) throws SQLException, ServiceException {
+        access.requireAdmin();
+        if (sectionID <= 0) throw new ServiceException("Section Id is required.");
+        if (sectionDao.hasStudents(sectionID)) { throw new ServiceException("Section has students."); }
+        sectionDao.deleteSection(sectionID);
+    }
+
+    //delete course
+    public void deleteCourse(int courseID) throws SQLException, ServiceException {
+        access.requireAdmin();
+        if (courseID <= 0) throw new ServiceException("Course Id is required.");
+        List<Section> sections = sectionDao.findSectionsForRegistration(courseID);
+        if (!sections.isEmpty()) throw new ServiceException("Section has students.");
+        courseDao.deleteCourse(courseID);
+    }
 }
