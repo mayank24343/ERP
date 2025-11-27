@@ -2,12 +2,10 @@ package edu.univ.erp.data;
 
 import edu.univ.erp.domain.*;
 import edu.univ.erp.util.DataSourceProvider;
-
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class EnrollmentDao {
     private final DataSource ds;
@@ -17,233 +15,152 @@ public class EnrollmentDao {
     public EnrollmentDao(DataSource ds) {
         this.ds = ds;
         this.courseDao = new CourseDao(ds);
+        // initialize UserDao with both data sources
         this.userDao = new UserDao(DataSourceProvider.getAuthDataSource(), DataSourceProvider.getERPDataSource());
     }
 
-    // ---------------------------------------------------------
-    // Check if a student is already enrolled in a section
-    // ---------------------------------------------------------
+    // to check wether a student is already actively registered for a specific section
     public boolean isAlreadyEnrolled(String studentId, int sectionId) throws SQLException {
-        String sql = """
-            SELECT 1 FROM enrollments
-            WHERE student_id = ? AND section_id = ? AND status = 'registered'
-        """;
+        var sql = "SELECT 1 FROM enrollments WHERE student_id = ? AND section_id = ? AND status = 'registered'";
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
             ps.setInt(2, sectionId);
-
-            try (ResultSet rs = ps.executeQuery()) {
+            try (var rs = ps.executeQuery()) {
                 return rs.next();
             }
         }
     }
 
-    // ---------------------------------------------------------
-    // Register a student
-    // ---------------------------------------------------------
+    // registers a student
+    // If they were previously 'dropped', it reactivates them to 'registered'.
     public void register(String studentId, int sectionId) throws SQLException {
-        String sql = """
-            INSERT INTO enrollments (student_id, section_id, status) VALUES (?, ?, 'registered')
-                                        ON DUPLICATE KEY UPDATE
-                                            status = 'registered';
-                                        
-        """;
+        var sql = "INSERT INTO enrollments (student_id, section_id, status) VALUES (?, ?, 'registered') ON DUPLICATE KEY UPDATE status = 'registered'";
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
             ps.setInt(2, sectionId);
             ps.executeUpdate();
         }
     }
 
-    // ---------------------------------------------------------
-    // Drop a student (soft delete: status = dropped)
-    // ---------------------------------------------------------
+    // it soft deletes a student by changing their status to 'dropped'
     public void drop(String studentId, int sectionId) throws SQLException {
-        String sql = """
-            UPDATE enrollments
-            SET status = 'dropped'
-            WHERE student_id = ? AND section_id = ? AND status = 'registered'
-        """;
+        var sql = "UPDATE enrollments SET status = 'dropped' WHERE student_id = ? AND section_id = ? AND status = 'registered'";
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
             ps.setInt(2, sectionId);
             ps.executeUpdate();
         }
     }
 
-    // ---------------------------------------------------------
-    // Get all active enrollments for a student
-    // ---------------------------------------------------------
+    // used to get a list of all active enrollment records for a student
     public List<Enrollment> getEnrollmentsForStudent(String studentId) throws SQLException {
-        String sql = """
-            SELECT enrollment_id, student_id, section_id, status
-            FROM enrollments
-            WHERE student_id = ? AND status = 'registered'
-        """;
+        var sql = "SELECT enrollment_id, student_id, section_id, status FROM enrollments WHERE student_id = ? AND status = 'registered'";
+        var list = new ArrayList<Enrollment>();
 
-        List<Enrollment> list = new ArrayList<>();
-
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(mapRow(rs));
-                }
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
             }
         }
-
         return list;
     }
 
-    // ---------------------------------------------------------
-    // List all enrolled students in a section (Instructor use)
-    // ---------------------------------------------------------
+    // provides a list of full Student objects enrolled in a specific section 
+    // combines ERP and auth data
     public List<Student> getEnrolledStudents(int sectionId) throws SQLException {
+        var sql = "SELECT stu.user_id, stu.roll_no, stu.program, stu.year FROM enrollments e JOIN students stu ON e.student_id = stu.user_id WHERE e.section_id = ? ORDER BY stu.roll_no";
+        var list = new ArrayList<Student>();
 
-        String sql = """
-        SELECT stu.user_id, stu.roll_no, stu.program, stu.year
-        FROM enrollments e
-        JOIN students stu ON e.student_id = stu.user_id
-        WHERE e.section_id = ?
-        ORDER BY stu.roll_no
-    """;
-
-        List<Student> list = new ArrayList<>();
-
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setInt(1, sectionId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                AuthDao authDao = new AuthDao(DataSourceProvider.getAuthDataSource());
+            try (var rs = ps.executeQuery()) {
+                // we need AuthDao here to fetch the login details for every student found
+                var authDao = new AuthDao(DataSourceProvider.getAuthDataSource());
 
                 while (rs.next()) {
                     String userId = rs.getString("user_id");
+                    // it fetches base user details from Auth DB
+                    User base = authDao.findByUserId(userId).orElseThrow(() -> new SQLException("Missing auth user: " + userId));
 
-                    // load full auth user from AUTH DB
-                    User base = authDao.findByUserId(userId)
-                            .orElseThrow(() -> new SQLException("Missing auth user: " + userId));
-
-                    // build Student object
+                    // combine Auth data with student specific data
                     list.add(new Student(
-                            base.getFullname(),
-                            base.getUserId(),
-                            base.getUsername(),
-                            base.getRole(),
-                            base.getPasswordHash(),
-                            base.getStatus(),
-                            base.getFailedAttempts(),
-                            base.getLockedUntil(),
-                            base.getLastLogin(),
-                            rs.getString("roll_no"),
-                            rs.getString("program"),
-                            rs.getInt("year")
+                        base.getFullname(), base.getUserId(), base.getUsername(), base.getRole(),
+                        base.getPasswordHash(), base.getStatus(), base.getFailedAttempts(),
+                        base.getLockedUntil(), base.getLastLogin(),
+                        rs.getString("roll_no"), rs.getString("program"), rs.getInt("year")
                     ));
                 }
             }
         }
-
         return list;
     }
 
-
-
-    // ---------------------------------------------------------
-    // List all sectionIds a student is enrolled in
-    // (used to join into SectionDao)
-    // ---------------------------------------------------------
+    // returns a list of section IDs the student is currently registered for
     public List<Integer> getActiveSectionIdsForStudent(String studentId) throws SQLException {
-        String sql = """
-            SELECT section_id
-            FROM enrollments
-            WHERE student_id = ? AND status = 'registered'
-        """;
+        var sql = "SELECT section_id FROM enrollments WHERE student_id = ? AND status = 'registered'";
+        var ids = new ArrayList<Integer>();
 
-        List<Integer> ids = new ArrayList<>();
-
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
-
-            try (ResultSet rs = ps.executeQuery()) {
+            try (var rs = ps.executeQuery()) {
                 while (rs.next()) ids.add(rs.getInt("section_id"));
             }
         }
-
         return ids;
     }
 
+    // used to marks a section as 'completed' for all students in it
     public void markSectionCompleted(int sectionId) throws SQLException {
-        String sql = "UPDATE enrollments SET status='completed' WHERE section_id=? AND status='registered'";
+        var sql = "UPDATE enrollments SET status='completed' WHERE section_id=? AND status='registered'";
 
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setInt(1, sectionId);
             ps.executeUpdate();
         }
     }
 
+    // gets a list of section objects that a student has finished
     public List<Section> getCompletedSections(String studentId) throws SQLException {
-        String sql = """
-        SELECT s.* FROM enrollments e
-        JOIN sections s ON e.section_id = s.section_id
-        WHERE e.student_id=? AND e.status='completed'
-    """;
+        var sql = "SELECT s.* FROM enrollments e JOIN sections s ON e.section_id = s.section_id WHERE e.student_id=? AND e.status='completed'";
+        var result = new ArrayList<Section>();
 
-        List<Section> result = new ArrayList<>();
-
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result.add(mapsSection(rs)); // your existing mapper
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) result.add(mapsSection(rs));
             }
         }
         return result;
     }
 
-    //map row to Section
+    // this is a helper function
+    // it maps database row to section object 
+    // it basically fetches course and instructor details
     private Section mapsSection(ResultSet rs) throws SQLException {
         return new Section(
-                rs.getInt("section_id"),
-                courseDao.getCourse(rs.getInt("course_id")),
-                (Instructor) userDao.findFullUserByUserId(rs.getString("instructor_id")),
-                rs.getString("day_time"),
-                rs.getString("room"),
-                rs.getInt("capacity"),
-                rs.getString("semester"),
-                rs.getInt("year")
+            rs.getInt("section_id"),
+            courseDao.getCourse(rs.getInt("course_id")),
+            (Instructor) userDao.findFullUserByUserId(rs.getString("instructor_id")),
+            rs.getString("day_time"),
+            rs.getString("room"),
+            rs.getInt("capacity"),
+            rs.getString("semester"),
+            rs.getInt("year")
         );
     }
 
-    // ---------------------------------------------------------
-    // Convert from ResultSet to Enrollment
-    // ---------------------------------------------------------
+    // this is a helper function
+    // this is used to map a database row to Enrollment object
     private Enrollment mapRow(ResultSet rs) throws SQLException {
         return new Enrollment(
-                rs.getInt("enrollment_id"),
-                rs.getString("student_id"),
-                rs.getInt("section_id"),
-                rs.getString("status")
+            rs.getInt("enrollment_id"),
+            rs.getString("student_id"),
+            rs.getInt("section_id"),
+            rs.getString("status")
         );
     }
 }
