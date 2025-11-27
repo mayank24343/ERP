@@ -1,6 +1,5 @@
 package edu.univ.erp.service;
 
-import edu.univ.erp.api.maintenance.MaintenanceApi;
 import edu.univ.erp.data.AddDropDao;
 import edu.univ.erp.ui.UiContext;
 import edu.univ.erp.util.DataSourceProvider;
@@ -19,7 +18,7 @@ public class AddDropService {
 
     //change deadline
     public void updateDeadline(LocalDate d) throws Exception {
-        UiContext.get().access().requireAdmin();
+        UiContext.get().access().requireAdminAccess();
         maintenance.requireWriteAllowed();
         dao.setDeadline(d);
     }

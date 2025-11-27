@@ -31,69 +31,69 @@ public class InstructorService {
 
     //get instructor sections
     public List<Section> getMySections(String instructorId) throws Exception {
-        accessManager.requireInstructor(instructorId);
+        accessManager.requireInstructorAccess(instructorId);
         return sectionDao.getSectionsByInstructor(instructorId);
     }
 
     //get students in section
     public List<Student> getEnrolledStudents(int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSection(instructorId, sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
         return enrollmentDao.getEnrolledStudents(sectionId);
     }
 
     //assessment list
     public List<Assessment> getAssessments(int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSection(instructorId, sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
         return assessmentDao.getBySection(sectionId);
     }
 
     public void addAssessment(Assessment a, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        accessManager.requireInstructorForSection(instructorId, a.getSectionId());
+        accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
         assessmentDao.insert(a);
     }
 
     public void updateAssessment(Assessment a, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        accessManager.requireInstructorForSection(instructorId, a.getSectionId());
+        accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
         assessmentDao.update(a);
     }
 
     public void deleteAssessment(Assessment a, String instructorId) throws SQLException,  ServiceException {
         maintenanceService.requireWriteAllowed();
-        accessManager.requireInstructorForSection(instructorId, a.getSectionId());
+        accessManager.requireInstructorForSectionAccess(instructorId, a.getSectionId());
         scoreDao.deleteByAssessment(a.getId());
         assessmentDao.delete(a.getId());
     }
 
     //get scores for assessment
     public List<Score> getScoresForAssessment(int assessmentId, int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSection(instructorId, sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId, sectionId);
         return scoreDao.getScoresByAssessment(assessmentId);
     }
 
     public void saveScores(List<Score> scores, int sectionId, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        accessManager.requireInstructorForSection(instructorId,sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         scoreDao.upsertScores(scores);
     }
 
     //compute final grades
     public List<FinalGrade> computeFinalsPreview(int sectionId, String instructorId) throws SQLException, ServiceException {
-        accessManager.requireInstructorForSection(instructorId,sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         return finalGradeDao.computeFinals(sectionId);
     }
 
     //compute + store in final_grades table
     public void computeAndStoreFinals(int sectionId, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        accessManager.requireInstructorForSection(instructorId,sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         finalGradeDao.computeAndStoreFinals(sectionId);
     }
 
     //final grade for a student
     public FinalGrade getFinalGrade(int sectionId, String studentId) throws SQLException, ServiceException {
-        accessManager.requireStudent(studentId);
+        accessManager.requireStudentAccess(studentId);
         // return stored final grade if exists
         FinalGrade fg = finalGradeDao.getFinalGrade(sectionId, studentId);
         if (fg != null) return fg;
@@ -104,7 +104,7 @@ public class InstructorService {
 
     //final grades for a section
     public SectionGradeSummary getSectionGradeSummary(int sectionId, String instructorId) throws SQLException,  ServiceException {
-        accessManager.requireInstructorForSection(instructorId,sectionId);
+        accessManager.requireInstructorForSectionAccess(instructorId,sectionId);
         System.out.println("HERE");
         List<Student> students = enrollmentDao.getEnrolledStudents(sectionId);
         System.out.println("HERE");

@@ -3,7 +3,6 @@ package edu.univ.erp.service;
 import edu.univ.erp.access.AccessManager;
 import edu.univ.erp.data.*;
 import edu.univ.erp.domain.*;
-import org.mindrot.jbcrypt.BCrypt;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -36,7 +35,7 @@ public class AdminService {
     //add user
     public void addUser(String fullName, String username, String password, String role, String rollNo, String program, Integer year, String department, String designation) throws SQLException, ServiceException {
 
-        access.requireAdmin();
+        access.requireAdminAccess();
         maintenanceService.requireWriteAllowed();
 
         if (username.isEmpty() || password.isEmpty() || role.isEmpty() || username.isBlank() || password.isEmpty() || role.isBlank()) throw new ServiceException("Username and password and role are required.");
@@ -75,7 +74,7 @@ public class AdminService {
 
     //add course
     public void addCourse(String code, String title, int credits) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         maintenanceService.requireWriteAllowed();
 
         if (code.isEmpty() || code.isBlank()) throw new ServiceException("Code cannot be empty.");
@@ -87,7 +86,7 @@ public class AdminService {
 
     //update course
     public void updateCourse(String code, String title, int credits) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         maintenanceService.requireWriteAllowed();
         if (code.isBlank() || code.isEmpty()) throw new ServiceException("Code cannot be empty.");
         if (title.isEmpty() || title.isBlank()) throw new ServiceException("Title cannot be empty.");
@@ -108,7 +107,7 @@ public class AdminService {
 
     //add section
     public void addSection(int courseId, String instructorId, String dayTime, String room, int capacity, String semester, int year) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         maintenanceService.requireWriteAllowed();
         if (courseId <= 0) throw new ServiceException("Course Id must be positive.");
         if (instructorId.isEmpty() || instructorId.isBlank()) throw new ServiceException("Instructor Id is required.");
@@ -124,7 +123,7 @@ public class AdminService {
     }
 
     public void updateSection(int sectionID, int courseId, String instructorId, String dayTime, String room, int capacity, String semester, int year) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         maintenanceService.requireWriteAllowed();
         if (sectionID <= 0) throw new ServiceException("Section Id is required.");
         if (courseId <= 0) throw new ServiceException("Course Id must be positive.");
@@ -145,7 +144,7 @@ public class AdminService {
 
     //assign instructor
     public void assignInstructor(int sectionId, String instructorId) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         maintenanceService.requireWriteAllowed();
         if (sectionId <= 0) throw new ServiceException("Section Id is required.");
         sectionDao.updateInstructor(sectionId, instructorId);
@@ -154,7 +153,7 @@ public class AdminService {
     //maintenance mode toggle
     public void setMaintenance(boolean on) throws SQLException, ServiceException {
 
-        access.requireAdmin();
+        access.requireAdminAccess();
         if (on){
             maintenanceService.turnOn();
         }
@@ -165,7 +164,7 @@ public class AdminService {
 
     //delete section
     public void deleteSection(int sectionID) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         if (sectionID <= 0) throw new ServiceException("Section Id is required.");
         if (sectionDao.hasStudents(sectionID)) { throw new ServiceException("Section has students."); }
         sectionDao.deleteSection(sectionID);
@@ -173,7 +172,7 @@ public class AdminService {
 
     //delete course
     public void deleteCourse(int courseID) throws SQLException, ServiceException {
-        access.requireAdmin();
+        access.requireAdminAccess();
         if (courseID <= 0) throw new ServiceException("Course Id is required.");
         List<Section> sections = sectionDao.findSectionsForRegistration(courseID);
         if (!sections.isEmpty()) throw new ServiceException("Section has students.");

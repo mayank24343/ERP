@@ -18,13 +18,13 @@ public class GradeSlabService {
     }
 
     public List<GradeSlab> getSlabs(int sectionId, String instructorId) throws SQLException, ServiceException {
-        UiContext.get().access().requireInstructorForSection(instructorId,sectionId);
+        UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
         return dao.getSlabs(sectionId);
     }
 
     public void addSlab(int sectionId, String letter, double min, double max, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        UiContext.get().access().requireInstructorForSection(instructorId, sectionId);
+        UiContext.get().access().requireInstructorForSectionAccess(instructorId, sectionId);
         List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
         for (GradeSlab slab : slabs) {
             if (slab.getLetter().equals(letter)) {
@@ -39,7 +39,7 @@ public class GradeSlabService {
 
     public void updateSlab(GradeSlab slab, int sectionId, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        UiContext.get().access().requireInstructorForSection(instructorId,sectionId);
+        UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
         List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
         for (GradeSlab s : slabs) {
             if (s.getLetter().equals(slab.getLetter())) {
@@ -54,7 +54,7 @@ public class GradeSlabService {
 
     public void deleteSlab(int slabId, int sectionId, String instructorId) throws SQLException, ServiceException {
         maintenanceService.requireWriteAllowed();
-        UiContext.get().access().requireInstructorForSection(instructorId,sectionId);
+        UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
         List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
         dao.deleteSlab(slabId);
     }

@@ -8,13 +8,14 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 
 public class AccessManager {
-
     private final SectionDao sectionDao;
 
+    //constructor
     public AccessManager(DataSource erpDS) {
         this.sectionDao = new SectionDao(erpDS);
     }
 
+    //current user
     public User current() throws ServiceException {
         User u = CurrentSession.get();
         if (u == null)
@@ -23,14 +24,14 @@ public class AccessManager {
     }
 
     //admin access
-    public void requireAdmin() throws ServiceException {
+    public void requireAdminAccess() throws ServiceException {
         if (!"admin".equalsIgnoreCase(current().getRole())) {
             throw new ServiceException("Access denied: Admin only.");
         }
     }
 
     //student access
-    public void requireStudent(String studentId) throws ServiceException {
+    public void requireStudentAccess(String studentId) throws ServiceException {
         User u = current();
         if (!"student".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(studentId)) {
             throw new ServiceException("Not allowed: Student access only.");
@@ -38,7 +39,7 @@ public class AccessManager {
     }
 
     //instructor access
-    public void requireInstructor(String instructorId) throws ServiceException {
+    public void requireInstructorAccess(String instructorId) throws ServiceException {
         User u = current();
         if (!"instructor".equalsIgnoreCase(u.getRole()) || !u.getUserId().equals(instructorId)) {
             throw new ServiceException("Not allowed: Instructor access only.");
@@ -46,7 +47,7 @@ public class AccessManager {
     }
 
     //instructor & section access
-    public void requireInstructorForSection(String instructorId, int sectionId) throws ServiceException {
+    public void requireInstructorForSectionAccess(String instructorId, int sectionId) throws ServiceException {
         User u = current();
         if (!"instructor".equalsIgnoreCase(u.getRole()) ||
                 !u.getUserId().equals(instructorId)) {

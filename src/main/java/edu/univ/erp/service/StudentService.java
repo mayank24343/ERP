@@ -54,7 +54,7 @@ public class StudentService {
         maintenanceService.requireWriteAllowed();
 
         //access management
-        UiContext.get().access().requireStudent(studentId);
+        UiContext.get().access().requireStudentAccess(studentId);
 
         //throw error if already enrolled or section full
         if (enrollmentDao.isAlreadyEnrolled(studentId, sectionId)) {
@@ -75,7 +75,7 @@ public class StudentService {
         maintenanceService.requireWriteAllowed();
 
         //access management
-        UiContext.get().access().requireStudent(studentId);
+        UiContext.get().access().requireStudentAccess(studentId);
 
         //throw error if after drop deadline or not enrolled in course
         if (LocalDate.now().isAfter(UiContext.get().adddrop().getDeadline().getData())) {
@@ -93,21 +93,21 @@ public class StudentService {
     //enrolled sections
     public List<Section> getMySections(String studentId) throws Exception {
         //access management
-        UiContext.get().access().requireStudent(studentId);
+        UiContext.get().access().requireStudentAccess(studentId);
         return sectionDao.getSectionsForStudent(studentId);
     }
 
     //student timetable
     public List<Section> getTimetable(String studentId) throws Exception {
         //access management
-        UiContext.get().access().requireStudent(studentId);
+        UiContext.get().access().requireStudentAccess(studentId);
         return sectionDao.getSectionsForStudent(studentId);
     }
 
     //
     public List<GradeView> getGradeBreakdown(String studentId) throws Exception {
         //access management
-        UiContext.get().access().requireStudent(studentId);
+        UiContext.get().access().requireStudentAccess(studentId);
         List<GradeView> result = new ArrayList<>();
 
         //enrolled sections
@@ -133,7 +133,7 @@ public class StudentService {
     //final grades for student
     public List<FinalGrade> getFinalGrades(String studentId) throws Exception {
         //access management
-        UiContext.get().access().requireStudent(studentId);
+        UiContext.get().access().requireStudentAccess(studentId);
         return finalGradeDao.getFinalGradesForStudent(studentId);
     }
 
