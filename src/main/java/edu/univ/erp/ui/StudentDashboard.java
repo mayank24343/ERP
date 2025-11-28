@@ -33,16 +33,19 @@ public class StudentDashboard extends JFrame {
     private JPanel timetableCard;
     private JPanel gradesCard;
     private JPanel completedCard;
-    private JTable completedTable;
     //tables
+    private JTable completedTable;
     private JTable catalogTable;
     private JTable mySectionsTable;
     private JTable finalGradesTable;
     private JTable breakdownTable;
     private JTable availableSectionsTable;
+    private JTable timeTable;
     //models for table
     private CatalogTableModel catalogModel;
-    private MySectionsTableModel mySectionsModel;
+    private SectionListModel mySectionsModel;
+    private SectionListModel completedModel;
+    private TimeTableModel timeTableModel;
     private FinalGradesTableModel finalGradesModel;
     private BreakdownTableModel breakdownModel;
     private AvailableSectionsTableModel availableSectionsModel;
@@ -285,13 +288,11 @@ public class StudentDashboard extends JFrame {
     private void initMySectionsCard() {
         mySectionsCard = new JPanel(new BorderLayout());
         mySectionsCard.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        mySectionsModel = new MySectionsTableModel();
+        mySectionsModel = new SectionListModel();
         mySectionsTable = new JTable(mySectionsModel);
+
         String[] sortOptions = {
-                "Section ID",
-                "Course",
-                "Day/Time",
-                "Room"
+                "Section ID", "Course Code", "Course Title", "Instructor", "Semester", "Year"
         };
         JComboBox<String> sortBox = new JComboBox<>(sortOptions);
         mySectionsTable.setAutoCreateRowSorter(true);
@@ -302,6 +303,8 @@ public class StudentDashboard extends JFrame {
                 case 1 -> 1;
                 case 2 -> 2;
                 case 3 -> 3;
+                case 4 -> 4;
+                case 5 -> 5;
                 default -> 0;
             };
 
@@ -328,7 +331,7 @@ public class StudentDashboard extends JFrame {
 
     //load sections
     private void loadMySections() {
-        ApiResult<List<Section>> r = api.mySections(studentUser.getUserId());
+        var r = api.mySections(studentUser.getUserId());
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
@@ -342,7 +345,7 @@ public class StudentDashboard extends JFrame {
         if (row < 0) return;
 
         Section s = mySectionsModel.get(row);
-        ApiResult<String> r = api.drop(studentUser.getUserId(), s.getSectionId());
+        var r = api.drop(studentUser.getUserId(), s.getSectionId());
         JOptionPane.showMessageDialog(this, r.getMessage());
         loadMySections();
     }
@@ -374,8 +377,8 @@ public class StudentDashboard extends JFrame {
                 "Capacity"
         };
         JComboBox<String> sortBox = new JComboBox<>(sortOptions);
-        mySectionsTable.setAutoCreateRowSorter(true);
-        TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) mySectionsTable.getRowSorter();
+        availableSectionsTable.setAutoCreateRowSorter(true);
+        TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) availableSectionsTable.getRowSorter();
         sortBox.addActionListener(e -> {
             int col = switch (sortBox.getSelectedIndex()) {
                 case 0 -> 0;
@@ -434,13 +437,13 @@ public class StudentDashboard extends JFrame {
 
         JButton load = new JButton("Load Timetable");
         load.addActionListener(e -> {
-            ApiResult<List<Section>> r = api.timetable(studentUser.getUserId());
+            var r = api.timetable(studentUser.getUserId());
             if (!r.isSuccess()) {
                 JOptionPane.showMessageDialog(this, r.getMessage());
                 return;
             }
 
-            MySectionsTableModel m = new MySectionsTableModel();
+            TimeTableModel m = new TimeTableModel();
             m.setData(r.getData());
             table.setModel(m);
         });
@@ -499,7 +502,8 @@ public class StudentDashboard extends JFrame {
     private void initCompletedCard() {
         completedCard = new JPanel(new BorderLayout());
         completedCard.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-        completedTable = new JTable();
+        completedModel = new SectionListModel();
+        completedTable = new JTable(completedModel);
         completedCard.add(new JScrollPane(completedTable), BorderLayout.CENTER);
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -521,8 +525,7 @@ public class StudentDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
         }
-
-        completedTable.setModel(new SectionListModel(r.getData()));
+        completedModel.setData(r.getData());
     }
 
     //models for tables
@@ -554,7 +557,7 @@ public class StudentDashboard extends JFrame {
         }
     }
 
-    private static class MySectionsTableModel extends AbstractTableModel {
+    private static class TimeTableModel extends AbstractTableModel {
         private final String[] cols = {"Section ID", "Course", "Day/Time", "Room"};
         private List<Section> data = new ArrayList<>();
 
@@ -599,7 +602,7 @@ public class StudentDashboard extends JFrame {
 
         @Override
         public Object getValueAt(int r, int c) {
-            Section s = data.get(r);
+            Section s = get(r);
             return switch (c) {
                 case 0 -> s.getSectionId();
                 case 1 -> s.getInstructor().getFullname();
@@ -612,7 +615,7 @@ public class StudentDashboard extends JFrame {
     }
 
     private static class FinalGradesTableModel extends AbstractTableModel {
-        private final String[] cols = {"Section", "Percentage", "Grade"};
+        private final String[] cols = {"Course", "Final Percentage", "Grade"};
         private List<FinalGrade> data = new ArrayList<>();
 
         public void setData(List<FinalGrade> d) {
@@ -637,7 +640,7 @@ public class StudentDashboard extends JFrame {
     }
 
     private static class BreakdownTableModel extends AbstractTableModel {
-        private final String[] cols = {"Section", "Assessment", "Score", "Final %"};
+        private final String[] cols = {"Course", "Assessment", "Score", "Final Percentage"};
         private List<StudentService.GradeView> data = new ArrayList<>();
 
         public void setData(List<StudentService.GradeView> d) {
@@ -662,10 +665,7 @@ public class StudentDashboard extends JFrame {
             for (var g : data) {
                 for (Assessment a : g.getAssessments()) {
                     if (index == r) {
-                        Score sc = g.getScores().stream()
-                                .filter(s -> s.getAssessmentId() == a.getId())
-                                .findFirst().orElse(null);
-
+                        Score sc = g.getScores().stream().filter(s -> s.getAssessmentId() == a.getId()).findFirst().orElse(null);
                         return switch (c) {
                             case 0 -> g.getSection().getCourse().getTitle();
                             case 1 -> a.getName();
@@ -681,18 +681,9 @@ public class StudentDashboard extends JFrame {
         }
     }
 
-    public class SectionListModel extends AbstractTableModel {
-
-        private final String[] cols = {
-                "Section ID", "Course Code", "Course Title",
-                "Instructor", "Time", "Room", "Capacity", "Semester", "Year"
-        };
-
+    public static class SectionListModel extends AbstractTableModel {
+        private final String[] cols = {"Section ID", "Course Code", "Course Title", "Instructor", "Semester", "Year"};
         private List<Section> data = new ArrayList<>();
-
-        public SectionListModel(List<Section> list) {
-            setData(list);
-        }
 
         public void setData(List<Section> list) {
             this.data = list;
@@ -727,11 +718,8 @@ public class StudentDashboard extends JFrame {
                 case 1 -> s.getCourse().getCode();
                 case 2 -> s.getCourse().getTitle();
                 case 3 -> s.getInstructor().getFullname();
-                case 4 -> s.getDayTime();
-                case 5 -> s.getRoom();
-                case 6 -> s.getCapacity();
-                case 7 -> s.getSemester();
-                case 8 -> s.getYear();
+                case 4 -> s.getSemester();
+                case 5 -> s.getYear();
                 default -> null;
             };
         }

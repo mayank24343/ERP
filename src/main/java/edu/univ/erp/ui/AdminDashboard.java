@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class AdminDashboard extends JFrame {
     private final Admin adminUser;
     private final AdminApi api;
