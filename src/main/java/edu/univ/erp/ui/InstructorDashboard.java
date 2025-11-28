@@ -43,8 +43,10 @@ public class InstructorDashboard extends JFrame {
     private JPanel statsContent;
     //the selected section determines output of assessments, grades etc.
     private List<Section> mySections = new ArrayList<>();
-    private JComboBox<String> sectionDropdown;
+    private JPanel sectionNavPanel;
+    private JPanel fullNav;
     private Section selectedSection;
+    private JTextArea details;
     //Tables
     private JTable assessmentsTable;
     private JTable gradebookTable;
@@ -70,7 +72,6 @@ public class InstructorDashboard extends JFrame {
         setSize(1200, 800);
         setLocationRelativeTo(null);
         initUI();
-        loadSections();
     }
 
     //ui initialisation
@@ -79,20 +80,26 @@ public class InstructorDashboard extends JFrame {
         //find if maintenance is on
         boolean maintenanceOn = maintenanceApi.isMaintenanceOn().getData();
 
-        //left nav
+        //l
+        fullNav = new JPanel(new BorderLayout());
         navPanel = new JPanel();
+        sectionNavPanel = new JPanel();
         navPanel.setLayout(new GridLayout(10, 1, 0, 5));
         navPanel.setPreferredSize(new Dimension(220, 800));
         navPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
         navPanel.setBackground(teal);
-        JButton sectionsBtn = createNavButton("My Sections");
+        sectionNavPanel.setLayout(new GridLayout(10, 1, 0, 5));
+        sectionNavPanel.setPreferredSize(new Dimension(220, 800));
+        sectionNavPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
+        sectionNavPanel.setBackground(teal);
+        JButton sectionsBtn = createNavButton("Details");
         JButton assessBtn = createNavButton("Assessments");
         JButton gradebookBtn = createNavButton("Gradebook");
         JButton finalsBtn = createNavButton("Final Grades");
         JButton statsBtn = createNavButton("Section Stats");
         JButton slabsBtn = createNavButton("Grading Slabs");
         slabsBtn.addActionListener(e -> showCard("slabs"));
-        sectionsBtn.addActionListener(e -> showCard("sections"));
+        sectionsBtn.addActionListener(e -> showCard("details"));
         assessBtn.addActionListener(e -> showCard("assessments"));
         gradebookBtn.addActionListener(e -> showCard("gradebook"));
         finalsBtn.addActionListener(e -> showCard("finals"));
@@ -103,12 +110,12 @@ public class InstructorDashboard extends JFrame {
         navPanel.add(finalsBtn);
         navPanel.add(statsBtn);
         navPanel.add(slabsBtn);
-
+        loadSections();
         //cards layout to switch screens for functionality
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         //build cards
-        initSectionsCard();
+        initDetailsCard();
         initAssessmentsCard();
         initGradebookCard();
         initFinalGradesCard();
@@ -116,16 +123,18 @@ public class InstructorDashboard extends JFrame {
         initSlabsCard();
 
         //add them to cards layout
-        contentPanel.add(sectionsCard, "sections");
+        contentPanel.add(sectionsCard, "details");
         contentPanel.add(assessmentsCard, "assessments");
         contentPanel.add(gradebookCard, "gradebook");
         contentPanel.add(finalsCard, "finals");
         contentPanel.add(statsCard, "stats");
         contentPanel.add(slabsCard, "slabs");
 
+        fullNav.add(navPanel, BorderLayout.EAST);
+        fullNav.add(sectionNavPanel, BorderLayout.WEST);
         add(createTopBar(instructorUser.getFullname()), BorderLayout.NORTH); //top bar with welcome, logout, change password
         add(buildMaintenanceBanner(maintenanceOn), BorderLayout.AFTER_LAST_LINE);// maintenance flag
-        add(navPanel, BorderLayout.WEST);//left side nav
+        add(fullNav, BorderLayout.WEST);//left side nav
         add(contentPanel, BorderLayout.CENTER);//main content
     }
 
@@ -247,36 +256,28 @@ public class InstructorDashboard extends JFrame {
     }
 
     //instructor sections detail & dropdown choose
-    private void initSectionsCard() {
+    private void initDetailsCard() {;
         sectionsCard = new JPanel(new BorderLayout());
         sectionsCard.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        JLabel lbl = new JLabel("My Sections");
+        JLabel lbl = new JLabel("Section Details");
         lbl.setFont(new Font("SansSerif", Font.BOLD, 22));
-        sectionDropdown = new JComboBox<>();
 
         JPanel top = new JPanel(new BorderLayout());
         top.add(lbl, BorderLayout.WEST);
-        top.add(sectionDropdown, BorderLayout.EAST);
-
-        JTextArea details = new JTextArea();
+        details = new JTextArea();
         details.setEditable(false);
-        details.setFont(new Font("Monospaced", Font.PLAIN, 15));
-        JButton refresh = new JButton("Refresh");
-        refresh.addActionListener(e -> loadSections());
-
-        sectionDropdown.addActionListener(e -> showSectionDetails(details));
-
+        details.setFont(new Font("SansSerif", Font.BOLD, 15));
+        showSectionDetails(details);
+        sectionsCard.add(details, BorderLayout.CENTER);
         sectionsCard.add(top, BorderLayout.NORTH);
-        sectionsCard.add(refresh, BorderLayout.SOUTH);
-        sectionsCard.add(new JScrollPane(details), BorderLayout.CENTER);
     }
 
     //display section details
     private void showSectionDetails(JTextArea details) {
-        int idx = sectionDropdown.getSelectedIndex();
-        if (idx < 0 || idx >= mySections.size()) return;
-        selectedSection = mySections.get(idx);
-
+        if (selectedSection == null) {
+            details.setText("No sections assigned.");
+            return;
+        }
         details.setText("Section ID: " + selectedSection.getSectionId() + "\n" +
                         "Course Code: " + selectedSection.getCourse().getCode() + "\n" +
                         "Course Title: " + selectedSection.getCourse().getTitle() + "\n" +
@@ -286,28 +287,33 @@ public class InstructorDashboard extends JFrame {
                         "Capacity: " + selectedSection.getCapacity() + "\n" +
                         "Semester: " + selectedSection.getSemester() + "\n" +
                         "Year: " + selectedSection.getYear());
-        details.setFont(new Font("SansSerif", Font.BOLD, 15));
     }
 
     //load sections for instructor
     private void loadSections() {
-        ApiResult<List<Section>> r = api.getMySections(instructorUser.getUserId());
+        var r = api.getMySections(instructorUser.getUserId());
         if (!r.isSuccess()) {
             JOptionPane.showMessageDialog(this, r.getMessage());
             return;
         }
 
         mySections = r.getData();
-        sectionDropdown.removeAllItems();
+        List<JButton> sectionSelectors = new ArrayList<>();
         for (Section s : mySections) {
-            sectionDropdown.addItem(
-                    "Section " + s.getSectionId() + " - " + s.getDayTime()
-            );
+            JButton btn = createNavButton(s.getCourse().getCode() + " - " + s.getSectionId());
+            btn.addActionListener(e -> {
+                selectedSection = s;
+                showSectionDetails(details);
+                showCard("details");
+            });
+            sectionSelectors.add(btn);
         }
 
-        if (!mySections.isEmpty()) {
-            selectedSection = mySections.getFirst();
+        for (JButton btn : sectionSelectors) {
+            sectionNavPanel.add(btn);
         }
+
+        selectedSection = mySections.isEmpty() ? null : mySections.getFirst();
     }
 
     //show assessments for section
