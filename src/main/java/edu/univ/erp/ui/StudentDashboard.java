@@ -455,16 +455,8 @@ public class StudentDashboard extends JFrame {
 
         finalGradesModel = new FinalGradesTableModel();
         finalGradesTable = new JTable(finalGradesModel);
-
         breakdownModel = new BreakdownTableModel();
         breakdownTable = new JTable(breakdownModel);
-
-        JSplitPane split = new JSplitPane(
-                JSplitPane.VERTICAL_SPLIT,
-                new JScrollPane(finalGradesTable),
-                new JScrollPane(breakdownTable)
-        );
-        split.setDividerLocation(250);
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton loadFinals = new JButton("Load Final Grades");
@@ -479,7 +471,8 @@ public class StudentDashboard extends JFrame {
         top.add(exportFinals);
 
         gradesCard.add(top, BorderLayout.NORTH);
-        gradesCard.add(split, BorderLayout.CENTER);
+        gradesCard.add(new JScrollPane(finalGradesTable), BorderLayout.CENTER);
+        gradesCard.add(new JScrollPane(breakdownTable), BorderLayout.SOUTH);
     }
 
     //load final grades

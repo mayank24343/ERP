@@ -670,7 +670,7 @@ public class InstructorDashboard extends JFrame {
         edit.addActionListener(e -> openEditSlabDialog());
         delete.addActionListener(e -> deleteSlab());
 
-        slabsCard.add(buttons, BorderLayout.SOUTH);
+        slabsCard.add(buttons, BorderLayout.NORTH);
     }
 
     //load slabs for section
