@@ -55,20 +55,6 @@ public class EnrollmentDao {
         }
     }
 
-    // used to get a list of all active enrollment records for a student
-    public List<Enrollment> getEnrollmentsForStudent(String studentId) throws SQLException {
-        var sql = "SELECT enrollment_id, student_id, section_id, status FROM enrollments WHERE student_id = ? AND status = 'registered'";
-        var list = new ArrayList<Enrollment>();
-
-        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
-            ps.setString(1, studentId);
-            try (var rs = ps.executeQuery()) {
-                while (rs.next()) list.add(mapRow(rs));
-            }
-        }
-        return list;
-    }
-
     // provides a list of full Student objects enrolled in a specific section 
     // combines ERP and auth data
     public List<Student> getEnrolledStudents(int sectionId) throws SQLException {
@@ -97,20 +83,6 @@ public class EnrollmentDao {
             }
         }
         return list;
-    }
-
-    // returns a list of section IDs the student is currently registered for
-    public List<Integer> getActiveSectionIdsForStudent(String studentId) throws SQLException {
-        var sql = "SELECT section_id FROM enrollments WHERE student_id = ? AND status = 'registered'";
-        var ids = new ArrayList<Integer>();
-
-        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
-            ps.setString(1, studentId);
-            try (var rs = ps.executeQuery()) {
-                while (rs.next()) ids.add(rs.getInt("section_id"));
-            }
-        }
-        return ids;
     }
 
     // used to marks a section as 'completed' for all students in it
@@ -150,17 +122,6 @@ public class EnrollmentDao {
             rs.getInt("capacity"),
             rs.getString("semester"),
             rs.getInt("year")
-        );
-    }
-
-    // this is a helper function
-    // this is used to map a database row to Enrollment object
-    private Enrollment mapRow(ResultSet rs) throws SQLException {
-        return new Enrollment(
-            rs.getInt("enrollment_id"),
-            rs.getString("student_id"),
-            rs.getInt("section_id"),
-            rs.getString("status")
         );
     }
 }

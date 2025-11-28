@@ -29,19 +29,6 @@ public class AssessmentDao {
         return list;
     }
 
-    // this finds a specific assessment using its ID
-    public Assessment getById(int assessmentId) throws SQLException {
-        var sql = "SELECT assessment_id, section_id, name, max_marks, weight FROM assessments WHERE assessment_id = ?";
-
-        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, assessmentId);
-            try (var rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null; // Return null if not found
-    }
-
     // this adds a new assessment to the database
 
     public void insert(Assessment a) throws SQLException {
