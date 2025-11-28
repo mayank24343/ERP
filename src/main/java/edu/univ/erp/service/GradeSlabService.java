@@ -39,7 +39,6 @@ public class GradeSlabService {
     public void deleteSlab(int slabId, int sectionId, String instructorId) throws Exception {
         maintenanceService.requireWriteAllowed();
         UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
-        List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
         dao.deleteSlab(slabId);
     }
 
@@ -48,9 +47,6 @@ public class GradeSlabService {
         UiContext.get().access().requireInstructorForSectionAccess(instructorId,sectionId);
         List<GradeSlab> slabs = getSlabs(sectionId, instructorId);
         for (GradeSlab s : slabs) {
-            if (s.getLetter().equals(slab.getLetter())) {
-                throw new ServiceException("Letter Grade already exists");
-            }
             if (!((s.getMin() >= slab.getMax() && s.getMax() >= slab.getMax()) || (s.getMin() <= slab.getMin() && s.getMax() <= slab.getMin()))) {
                 throw new ServiceException("Overlapping Slabs");
             }
