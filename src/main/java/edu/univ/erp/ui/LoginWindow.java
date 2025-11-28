@@ -28,7 +28,7 @@ public class LoginWindow extends JFrame {
 
     private void initUI() {
         setTitle("University ERP | Login Page");
-        setSize(800, 500);
+        setSize(1200, 800);
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
