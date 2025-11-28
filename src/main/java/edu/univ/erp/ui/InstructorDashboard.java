@@ -59,7 +59,7 @@ public class InstructorDashboard extends JFrame {
     private final Color teal = new Color(63, 173, 168);
     //constructor
     public InstructorDashboard(Instructor instructorUser) {
-        super("University ERP | Instructor Dashboard - " + instructorUser.getUsername());
+        super("University ERP | Instructor Dashboard - " + instructorUser.getFullname());
         this.instructorUser = instructorUser;
         this.api = new InstructorApi(UiContext.get().instructors());
         this.authApi = new AuthApi(UiContext.get().auth());
