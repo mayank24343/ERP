@@ -13,6 +13,7 @@ A full-featured desktop-based University ERP system built using Java, Swing, Mav
 
 * [Project Report](Report.pdf)
 * [Testing Plan](TestPlan.pdf)
+* [Demo Video](https://canva.link/2jtwrxq88s70otw)
 
 ---
 
